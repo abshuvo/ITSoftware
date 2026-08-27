@@ -1,0 +1,529 @@
+﻿@model ITSoftware.Models.ViewModels.DashboardViewModel
+@{
+    ViewData["Title"] = "Dashboard";
+    ViewData["Subtitle"] = "তোমার প্রস্তুতির সামগ্রিক চিত্র";
+}
+
+@section Styles {
+    <style>
+        /* ── Stat cards ── */
+        .stat-card {
+            background: #fff;
+            border: 1px solid #e8e7e2;
+            border-radius: 12px;
+            padding: 18px 20px;
+            height: 100%;
+            transition: box-shadow .2s, transform .2s;
+        }
+
+            .stat-card:hover {
+                box-shadow: 0 4px 16px rgba(0,0,0,.07);
+                transform: translateY(-2px);
+            }
+
+        .stat-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            margin-bottom: 12px;
+        }
+
+        .stat-value {
+            font-size: 28px;
+            font-weight: 700;
+            line-height: 1;
+        }
+
+        .stat-label {
+            font-size: 12px;
+            color: #888;
+            margin-top: 4px;
+        }
+
+        /* ── Section link cards ── */
+        .section-card {
+            background: #fff;
+            border: 1px solid #e8e7e2;
+            border-radius: 12px;
+            padding: 20px;
+            height: 100%;
+            text-decoration: none;
+            color: inherit;
+            display: block;
+            transition: box-shadow .2s, transform .2s;
+            border-left: 4px solid;
+        }
+
+            .section-card:hover {
+                box-shadow: 0 4px 16px rgba(0,0,0,.07);
+                transform: translateY(-2px);
+                color: inherit;
+            }
+
+        .section-num {
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: .06em;
+            text-transform: uppercase;
+            margin-bottom: 6px;
+        }
+
+        .section-title {
+            font-size: 15px;
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+
+        .section-desc {
+            font-size: 12px;
+            color: #888;
+        }
+
+        .section-arrow {
+            font-size: 18px;
+            margin-top: 12px;
+        }
+
+        /* ── Progress rows ── */
+        .topic-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 0;
+            border-bottom: 1px solid #f0f0ee;
+        }
+
+            .topic-row:last-child {
+                border-bottom: none;
+            }
+
+        .topic-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            flex-shrink: 0;
+        }
+
+        .topic-name {
+            font-size: 13px;
+            flex: 1;
+        }
+
+        .topic-pct {
+            font-size: 12px;
+            color: #888;
+            min-width: 36px;
+            text-align: right;
+        }
+
+        .progress-xs {
+            height: 4px;
+            border-radius: 2px;
+            background: #f0f0ee;
+            min-width: 80px;
+        }
+
+            .progress-xs .bar {
+                height: 100%;
+                border-radius: 2px;
+            }
+
+        /* ── Overall ring ── */
+        .ring-wrap {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 24px 0;
+        }
+
+        .ring-svg {
+            overflow: visible;
+        }
+
+        /* ── Panel ── */
+        .panel {
+            background: #fff;
+            border: 1px solid #e8e7e2;
+            border-radius: 12px;
+            overflow: hidden;
+        }
+
+        .panel-header {
+            padding: 14px 18px;
+            border-bottom: 1px solid #f0f0ee;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .panel-title {
+            font-size: 13px;
+            font-weight: 600;
+        }
+
+        .panel-body {
+            padding: 6px 18px 12px;
+        }
+
+        .view-all {
+            font-size: 12px;
+            color: var(--primary);
+            text-decoration: none;
+        }
+
+            .view-all:hover {
+                text-decoration: underline;
+            }
+
+        /* ── MCQ preview ── */
+        .mcq-preview {
+            padding: 12px 0;
+            border-bottom: 1px solid #f0f0ee;
+        }
+
+            .mcq-preview:last-child {
+                border-bottom: none;
+            }
+
+        .mcq-q {
+            font-size: 13px;
+            font-weight: 500;
+            margin-bottom: 6px;
+        }
+
+        .mcq-ans {
+            font-size: 12px;
+            color: #fff;
+            background: var(--teal);
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 4px;
+        }
+
+        .mcq-cat {
+            font-size: 11px;
+            color: var(--primary);
+            background: var(--primary-lt);
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 4px;
+            margin-left: 6px;
+        }
+
+        /* Colors */
+        .c-purple {
+            color: var(--primary);
+        }
+
+        .c-teal {
+            color: var(--teal);
+        }
+
+        .c-amber {
+            color: var(--amber);
+        }
+
+        .c-coral {
+            color: var(--coral);
+        }
+
+        .bg-purple-lt {
+            background: var(--primary-lt);
+        }
+
+        .bg-teal-lt {
+            background: var(--teal-lt);
+        }
+
+        .bg-amber-lt {
+            background: var(--amber-lt);
+        }
+
+        .bg-coral-lt {
+            background: var(--coral-lt);
+        }
+    </style>
+}
+
+<!-- ══ Row 1 — Stat cards ══ -->
+<div class="row g-3 mb-4">
+    <div class="col-6 col-md-4 col-lg-2">
+        <div class="stat-card">
+            <div class="stat-icon bg-purple-lt c-purple">
+                <i class="bi bi-file-earmark-text"></i>
+            </div>
+            <div class="stat-value c-purple">@Model.SyllabusCount</div>
+            <div class="stat-label">Syllabus Files</div>
+        </div>
+    </div>
+    <div class="col-6 col-md-4 col-lg-2">
+        <div class="stat-card">
+            <div class="stat-icon bg-teal-lt c-teal">
+                <i class="bi bi-star"></i>
+            </div>
+            <div class="stat-value c-teal">@Model.TopicCount</div>
+            <div class="stat-label">Topics</div>
+        </div>
+    </div>
+    <div class="col-6 col-md-4 col-lg-2">
+        <div class="stat-card">
+            <div class="stat-icon bg-purple-lt c-purple">
+                <i class="bi bi-check2-circle"></i>
+            </div>
+            <div class="stat-value c-purple">@Model.CompletedTopicCount</div>
+            <div class="stat-label">Completed</div>
+        </div>
+    </div>
+    <div class="col-6 col-md-4 col-lg-2">
+        <div class="stat-card">
+            <div class="stat-icon bg-amber-lt c-amber">
+                <i class="bi bi-question-circle"></i>
+            </div>
+            <div class="stat-value c-amber">@Model.McqCount</div>
+            <div class="stat-label">MCQ Questions</div>
+        </div>
+    </div>
+    <div class="col-6 col-md-4 col-lg-2">
+        <div class="stat-card">
+            <div class="stat-icon bg-coral-lt c-coral">
+                <i class="bi bi-journal-text"></i>
+            </div>
+            <div class="stat-value c-coral">@Model.NoteCount</div>
+            <div class="stat-label">Notes Files</div>
+        </div>
+    </div>
+    <div class="col-6 col-md-4 col-lg-2">
+        <div class="stat-card">
+            <div class="stat-icon bg-teal-lt c-teal">
+                <i class="bi bi-people"></i>
+            </div>
+            <div class="stat-value c-teal">@Model.NonTechCount</div>
+            <div class="stat-label">Non-Tech Topics</div>
+        </div>
+    </div>
+</div>
+
+<!-- ══ Row 2 — Section cards ══ -->
+<div class="row g-3 mb-4">
+    <div class="col-12">
+        <p class="fw-semibold mb-2" style="font-size:13px; color:#888;">
+            SECTIONS — ক্লিক করে যাও
+        </p>
+    </div>
+
+    @{
+        var sections = new[]
+        {
+        new { Num="01", Title="Syllabus & Guidelines",
+        Desc="পরীক্ষার সিলেবাস এবং নির্দেশিকা",
+        Icon="bi-file-earmark-text", Color="#534AB7",
+        Ctrl="Syllabus" },
+        new { Num="02", Title="Important Topics",
+        Desc="গুরুত্বপূর্ণ টপিক ও অগ্রগতি ট্র্যাকিং",
+        Icon="bi-star", Color="#1D9E75",
+        Ctrl="Topic" },
+        new { Num="03", Title="Technical MCQ",
+        Desc="MCQ আপলোড, প্র্যাকটিস ও স্কোর",
+        Icon="bi-check-circle", Color="#BA7517",
+        Ctrl="Mcq" },
+        new { Num="04", Title="Written Notes",
+        Desc="PDF ও ছবি আকারে নোটস",
+        Icon="bi-journal-text", Color="#993C1D",
+        Ctrl="Note" },
+        new { Num="05", Title="Non-Technical Prep",
+        Desc="GK, বাংলা, ইংরেজি, গণিত, Viva",
+        Icon="bi-people", Color="#534AB7",
+        Ctrl="NonTech" },
+        };
+    }
+
+    @foreach (var s in sections)
+    {
+        <div class="col-12 col-sm-6 col-xl-4">
+            <a asp-controller="@s.Ctrl" asp-action="Index"
+               class="section-card"
+               style="border-left-color: @s.Color">
+                <div class="section-num" style="color: @s.Color">
+                    Section @s.Num
+                </div>
+                <div class="d-flex align-items-center gap-2 mb-1">
+                    <i class="bi @s.Icon" style="color: @s.Color; font-size:18px;"></i>
+                    <div class="section-title">@s.Title</div>
+                </div>
+                <div class="section-desc">@s.Desc</div>
+                <div class="section-arrow" style="color: @s.Color">
+                    <i class="bi bi-arrow-right-circle"></i>
+                </div>
+            </a>
+        </div>
+    }
+</div>
+
+<!-- ══ Row 3 — Progress + MCQ preview + Overall ring ══ -->
+<div class="row g-3">
+
+    <!-- Topic progress by category -->
+    <div class="col-12 col-lg-5">
+        <div class="panel h-100">
+            <div class="panel-header">
+                <span class="panel-title">
+                    <i class="bi bi-bar-chart c-purple me-1"></i>
+                    Topic Progress
+                </span>
+                <a asp-controller="Topic" asp-action="Index" class="view-all">
+                    সব দেখো →
+                </a>
+            </div>
+            <div class="panel-body">
+                @if (!Model.CategoryProgressList.Any())
+                {
+                    <p class="text-muted" style="font-size:13px; padding:10px 0;">
+                        এখনো কোনো topic যোগ করা হয়নি।
+                    </p>
+                }
+                else
+                {
+                    @foreach (var cat in Model.CategoryProgressList)
+                    {
+                        <div class="topic-row">
+                            <div class="topic-dot" style="background: var(--primary);"></div>
+                            <div class="topic-name">@cat.Category</div>
+                            <div class="progress-xs" style="width:100px;">
+                                <div class="bar"
+                                     style="width:@(cat.ProgressPercent)%;
+                                                    background: var(--primary);">
+                                </div>
+                            </div>
+                            <div class="topic-pct">@cat.ProgressPercent%</div>
+                        </div>
+                    }
+                }
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent MCQ -->
+    <div class="col-12 col-lg-4">
+        <div class="panel h-100">
+            <div class="panel-header">
+                <span class="panel-title">
+                    <i class="bi bi-question-circle c-amber me-1"></i>
+                    সাম্প্রতিক MCQ
+                </span>
+                <a asp-controller="Mcq" asp-action="Index" class="view-all">
+                    সব দেখো →
+                </a>
+            </div>
+            <div class="panel-body">
+                @if (!Model.RecentMcqs.Any())
+                {
+                    <p class="text-muted" style="font-size:13px; padding:10px 0;">
+                        এখনো কোনো MCQ যোগ করা হয়নি।
+                    </p>
+                }
+                else
+                {
+                    @foreach (var mcq in Model.RecentMcqs)
+                    {
+                        <div class="mcq-preview">
+                            <div class="mcq-q">@mcq.QuestionText</div>
+                            <span class="mcq-ans">
+                                উত্তর: @mcq.CorrectAnswer
+                            </span>
+                            @if (!string.IsNullOrEmpty(mcq.Category))
+                            {
+                                <span class="mcq-cat">@mcq.Category</span>
+                            }
+                        </div>
+                    }
+                }
+            </div>
+        </div>
+    </div>
+
+    <!-- Overall progress ring -->
+    <div class="col-12 col-lg-3">
+        <div class="panel h-100">
+            <div class="panel-header">
+                <span class="panel-title">
+                    <i class="bi bi-trophy c-teal me-1"></i>
+                    সামগ্রিক অগ্রগতি
+                </span>
+            </div>
+            <div class="panel-body ring-wrap">
+                <svg class="ring-svg" width="130" height="130" viewBox="0 0 130 130">
+                    <!-- Background circle -->
+                    <circle cx="65" cy="65" r="52"
+                            fill="none" stroke="#f0f0ee" stroke-width="10" />
+                    <!-- Progress circle -->
+                    <circle cx="65" cy="65" r="52"
+                            fill="none"
+                            stroke="var(--primary)"
+                            stroke-width="10"
+                            stroke-linecap="round"
+                            stroke-dasharray="326.7"
+                            stroke-dashoffset="@(326.7 - (326.7 * Model.OverallProgress / 100))"
+                            transform="rotate(-90 65 65)"
+                            id="ring-circle" />
+                    <!-- Center text -->
+                    <text x="65" y="60"
+                          text-anchor="middle"
+                          font-size="24"
+                          font-weight="700"
+                          fill="var(--primary)">
+                        @Model.OverallProgress%
+                    </text>
+                    <text x="65" y="78"
+                          text-anchor="middle"
+                          font-size="11"
+                          fill="#888">
+                        সম্পন্ন
+                    </text>
+                </svg>
+
+                <div class="mt-3 text-center">
+                    <div style="font-size:13px; color:#555;">
+                        <span style="color:var(--teal); font-weight:600;">
+                            @Model.CompletedTopicCount
+                        </span>
+                        / @Model.TopicCount টপিক শেষ
+                    </div>
+                    @if (Model.TopicCount > 0 && Model.OverallProgress < 100)
+                    {
+                        <div style="font-size:12px; color:#aaa; margin-top:4px;">
+                            আরো @(Model.TopicCount - Model.CompletedTopicCount)টি বাকি
+                        </div>
+                    }
+                    else if (Model.OverallProgress == 100)
+                    {
+                        <div style="font-size:12px; color:var(--teal); margin-top:4px;">
+                            🎉 সব শেষ! অভিনন্দন!
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+@section Scripts {
+    <script>
+        // Sidebar progress sync
+        setSidebarProgress(@Model.OverallProgress);
+
+        // Ring animation on load
+        const circle = document.getElementById('ring-circle');
+        if (circle) {
+            const target = parseFloat(circle.getAttribute('stroke-dashoffset'));
+            circle.style.strokeDashoffset = '326.7';
+            circle.style.transition = 'stroke-dashoffset 1s ease';
+            setTimeout(() => { circle.style.strokeDashoffset = target; }, 100);
+        }
+    </script>
+}

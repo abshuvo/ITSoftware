@@ -1,0 +1,375 @@
+﻿@model ITSoftware.Models.ViewModels.QuizQuestionViewModel
+@{
+    ViewData["Title"] = "Quiz Mode";
+    ViewData["Subtitle"] = $"Question {Model.CurrentNumber} of {Model.TotalQuestions}";
+    var opts = new[]
+    {
+        ("A", Model.Question.OptionA),
+        ("B", Model.Question.OptionB),
+        ("C", Model.Question.OptionC),
+        ("D", Model.Question.OptionD)
+    };
+}
+
+@section Styles {
+    <style>
+        .quiz-wrap {
+            max-width: 720px;
+            margin: 0 auto;
+        }
+
+        .progress-header {
+            background: #fff;
+            border: 1px solid #e8e7e2;
+            border-radius: 12px;
+            padding: 16px 20px;
+            margin-bottom: 20px;
+        }
+
+        .progress-bar-quiz {
+            height: 6px;
+            background: #f0f0ee;
+            border-radius: 3px;
+            margin-top: 10px;
+            overflow: hidden;
+        }
+
+            .progress-bar-quiz .fill {
+                height: 100%;
+                background: var(--primary);
+                border-radius: 3px;
+                transition: width .4s ease;
+            }
+
+        .score-pill {
+            font-size: 12px;
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-weight: 600;
+        }
+
+        .score-correct {
+            background: var(--teal-lt);
+            color: #085041;
+        }
+
+        .score-wrong {
+            background: var(--coral-lt);
+            color: #712B13;
+        }
+
+        .question-card {
+            background: #fff;
+            border: 1px solid #e8e7e2;
+            border-radius: 14px;
+            padding: 28px;
+            margin-bottom: 16px;
+        }
+
+        .question-num {
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: .06em;
+            color: var(--primary);
+            text-transform: uppercase;
+            margin-bottom: 10px;
+        }
+
+        .question-text {
+            font-size: 17px;
+            font-weight: 600;
+            color: #1a1a1a;
+            line-height: 1.5;
+        }
+
+        .option-btn {
+            width: 100%;
+            text-align: left;
+            padding: 14px 18px;
+            border-radius: 10px;
+            border: 1.5px solid #e8e7e2;
+            background: #fff;
+            font-size: 14px;
+            color: #333;
+            cursor: pointer;
+            transition: all .15s;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 10px;
+        }
+
+            .option-btn:hover:not(:disabled) {
+                border-color: var(--primary);
+                background: var(--primary-lt);
+                color: var(--primary);
+            }
+
+            .option-btn .opt-label {
+                width: 28px;
+                height: 28px;
+                border-radius: 50%;
+                background: #f0f0ee;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                font-size: 13px;
+                font-weight: 700;
+                flex-shrink: 0;
+                transition: all .15s;
+            }
+
+            .option-btn:hover:not(:disabled) .opt-label {
+                background: var(--primary);
+                color: #fff;
+            }
+
+            /* After answer states */
+            .option-btn.correct-ans {
+                border-color: var(--teal);
+                background: var(--teal-lt);
+                color: #085041;
+            }
+
+                .option-btn.correct-ans .opt-label {
+                    background: var(--teal);
+                    color: #fff;
+                }
+
+            .option-btn.wrong-ans {
+                border-color: #E24B4A;
+                background: #FCEBEB;
+                color: #501313;
+            }
+
+                .option-btn.wrong-ans .opt-label {
+                    background: #E24B4A;
+                    color: #fff;
+                }
+
+            .option-btn.neutral-ans {
+                opacity: .55;
+                cursor: default;
+            }
+
+        .answer-feedback {
+            border-radius: 12px;
+            padding: 14px 18px;
+            margin-bottom: 16px;
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+            font-size: 13px;
+        }
+
+        .feedback-correct {
+            background: var(--teal-lt);
+            border: 1px solid #5DCAA5;
+            color: #085041;
+        }
+
+        .feedback-wrong {
+            background: #FCEBEB;
+            border: 1px solid #F09595;
+            color: #501313;
+        }
+
+        .feedback-icon {
+            font-size: 20px;
+            flex-shrink: 0;
+            margin-top: 1px;
+        }
+
+        .feedback-title {
+            font-weight: 700;
+            font-size: 14px;
+            margin-bottom: 2px;
+        }
+
+        .btn-next {
+            width: 100%;
+            padding: 14px;
+            border-radius: 10px;
+            background: var(--primary);
+            color: #fff;
+            border: none;
+            font-size: 15px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: opacity .15s;
+        }
+
+            .btn-next:hover {
+                opacity: .9;
+            }
+    </style>
+}
+
+<div class="quiz-wrap">
+
+    <!-- Progress header -->
+    <div class="progress-header">
+        <div class="d-flex align-items-center justify-content-between">
+            <div style="font-size:13px;font-weight:600;color:#555;">
+                প্রশ্ন @Model.CurrentNumber / @Model.TotalQuestions
+            </div>
+            <div class="d-flex gap-2">
+                <span class="score-pill score-correct">
+                    <i class="bi bi-check2 me-1"></i>@Model.CorrectSoFar সঠিক
+                </span>
+                <span class="score-pill score-wrong">
+                    <i class="bi bi-x me-1"></i>@Model.WrongSoFar ভুল
+                </span>
+            </div>
+        </div>
+        <div class="progress-bar-quiz">
+            <div class="fill"
+                 style="width: @((int)((double)Model.CurrentNumber / Model.TotalQuestions * 100))%">
+            </div>
+        </div>
+    </div>
+
+    <!-- Question card -->
+    <div class="question-card">
+        <div class="question-num">Question @Model.CurrentNumber</div>
+        <div class="question-text">@Model.Question.QuestionText</div>
+        @if (!string.IsNullOrEmpty(Model.Question.Category))
+        {
+            <div style="margin-top:10px;">
+                <span style="font-size:11px;background:var(--primary-lt);
+                                 color:var(--primary);padding:3px 10px;
+                                 border-radius:20px;font-weight:600;">
+                    @Model.Question.Category
+                </span>
+            </div>
+        }
+    </div>
+
+    <!-- Options -->
+    @if (!Model.Answered)
+    {
+        <!-- উত্তর দেওয়ার আগে — clickable options -->
+        <form asp-action="SubmitAnswer" asp-controller="Mcq" method="post">
+            @Html.AntiForgeryToken()
+            <input type="hidden" name="questionId" value="@Model.Question.Id" />
+            <input type="hidden" name="selectedAnswer" id="selectedAnswer" />
+
+            @foreach (var (label, text) in opts)
+            {
+                <button type="button"
+                        class="option-btn"
+                        onclick="selectAnswer('@label', this)">
+                    <span class="opt-label">@label</span>
+                    <span>@text</span>
+                </button>
+            }
+
+            <button type="submit" id="submitBtn"
+                    class="btn-next" style="display:none; margin-top:6px;">
+                উত্তর জমা দাও <i class="bi bi-arrow-right ms-1"></i>
+            </button>
+        </form>
+    }
+    else
+    {
+        <!-- উত্তর দেওয়ার পরে — result দেখাও -->
+        @foreach (var (label, text) in opts)
+        {
+            string btnClass;
+            if (label == Model.Question.CorrectAnswer)
+                btnClass = "correct-ans";
+            else if (label == Model.SelectedAnswer && !Model.IsCorrect)
+                btnClass = "wrong-ans";
+            else
+                btnClass = "neutral-ans";
+
+            <button class="option-btn @btnClass" disabled>
+                <span class="opt-label">
+                    @if (label == Model.Question.CorrectAnswer)
+                    {
+                        <i class="bi bi-check2"></i>
+                    }
+                    else if (label == Model.SelectedAnswer && !Model.IsCorrect)
+                    {
+
+                        <i class="bi bi-x"></i>
+                    }
+                    else
+                    {
+
+                        @label
+                    }
+                </span>
+                <span>@text</span>
+            </button>
+        }
+
+        <!-- Feedback -->
+        <div class="answer-feedback @(Model.IsCorrect ? "feedback-correct" : "feedback-wrong")">
+            <div class="feedback-icon">
+                @if (Model.IsCorrect)
+                {
+                    <i class="bi bi-check-circle-fill"></i>
+                }
+                else
+                {
+
+                    <i class="bi bi-x-circle-fill"></i>
+                }
+            </div>
+            <div>
+                <div class="feedback-title">
+                    @(Model.IsCorrect ? "সঠিক উত্তর! 🎉" : $"ভুল হয়েছে — সঠিক উত্তর: {Model.Question.CorrectAnswer}")
+                </div>
+                @if (!string.IsNullOrEmpty(Model.Question.Explanation))
+                {
+                    <div style="margin-top:4px; opacity:.85;">
+                        @Model.Question.Explanation
+                    </div>
+                }
+            </div>
+        </div>
+
+        <!-- Next / Finish -->
+        <form asp-action="NextQuestion" asp-controller="Mcq" method="post">
+            @Html.AntiForgeryToken()
+            <button type="submit" class="btn-next">
+                @if (Model.CurrentNumber == Model.TotalQuestions)
+                {
+                    <text>Result দেখো <i class="bi bi-trophy ms-1"></i></text>
+                }
+                else
+                {
+                    <text>পরের প্রশ্ন <i class="bi bi-arrow-right ms-1"></i></text>
+                }
+            </button>
+        </form>
+    }
+</div>
+
+@section Scripts {
+    <script>
+        setSidebarProgress(0);
+
+        function selectAnswer(label, btn) {
+            // সব option থেকে hover state সরাও
+            document.querySelectorAll('.option-btn').forEach(b => {
+                b.style.borderColor = '';
+                b.style.background  = '';
+                b.style.color       = '';
+                b.querySelector('.opt-label').style.background = '';
+                b.querySelector('.opt-label').style.color      = '';
+            });
+
+            // Selected option highlight করো
+            btn.style.borderColor = 'var(--primary)';
+            btn.style.background  = 'var(--primary-lt)';
+            btn.style.color       = 'var(--primary)';
+            btn.querySelector('.opt-label').style.background = 'var(--primary)';
+            btn.querySelector('.opt-label').style.color      = '#fff';
+
+            document.getElementById('selectedAnswer').value = label;
+            document.getElementById('submitBtn').style.display = 'block';
+        }
+    </script>
+}

@@ -1,0 +1,301 @@
+﻿@model ITSoftware.Models.ViewModels.QuizResultViewModel
+@{
+    ViewData["Title"] = "Quiz Result";
+    ViewData["Subtitle"] = "তোমার পারফরম্যান্স";
+
+    string grade;
+    string gradeColor;
+    if (Model.ScorePercent >= 80) { grade = "Excellent!"; gradeColor = "#1D9E75"; }
+    else if (Model.ScorePercent >= 60) { grade = "Good!"; gradeColor = "#534AB7"; }
+    else if (Model.ScorePercent >= 40) { grade = "Average"; gradeColor = "#BA7517"; }
+    else { grade = "আরো practice করো"; gradeColor = "#993C1D"; }
+}
+
+@section Styles {
+    <style>
+        .result-wrap {
+            max-width: 680px;
+            margin: 0 auto;
+        }
+
+        .result-hero {
+            background: #fff;
+            border: 1px solid #e8e7e2;
+            border-radius: 16px;
+            padding: 36px 28px;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .result-ring {
+            margin: 0 auto 20px;
+            position: relative;
+            width: 140px;
+            height: 140px;
+        }
+
+        .ring-label {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+        }
+
+        .ring-pct {
+            font-size: 30px;
+            font-weight: 800;
+            line-height: 1;
+        }
+
+        .ring-sub {
+            font-size: 12px;
+            color: #888;
+        }
+
+        .stats-row {
+            display: flex;
+            justify-content: center;
+            gap: 32px;
+            margin-top: 20px;
+        }
+
+        .stat-item {
+            text-align: center;
+        }
+
+        .stat-num {
+            font-size: 24px;
+            font-weight: 700;
+        }
+
+        .stat-lbl {
+            font-size: 12px;
+            color: #888;
+            margin-top: 2px;
+        }
+
+        .grade-badge {
+            display: inline-block;
+            font-size: 18px;
+            font-weight: 700;
+            padding: 6px 20px;
+            border-radius: 30px;
+            margin-top: 10px;
+        }
+
+        .wrong-card {
+            background: #fff;
+            border: 1px solid #e8e7e2;
+            border-radius: 12px;
+            overflow: hidden;
+            margin-bottom: 20px;
+        }
+
+        .wrong-card-header {
+            padding: 14px 18px;
+            border-bottom: 1px solid #f0f0ee;
+            font-size: 13px;
+            font-weight: 600;
+            background: #FAECE7;
+            color: #712B13;
+        }
+
+        .wrong-item {
+            padding: 14px 18px;
+            border-bottom: 1px solid #f5f5f3;
+        }
+
+            .wrong-item:last-child {
+                border-bottom: none;
+            }
+
+        .wrong-q {
+            font-size: 13px;
+            font-weight: 600;
+            margin-bottom: 6px;
+        }
+
+        .correct-tag {
+            font-size: 12px;
+            background: var(--teal-lt);
+            color: #085041;
+            padding: 3px 10px;
+            border-radius: 6px;
+            font-weight: 600;
+            display: inline-block;
+        }
+
+        .expl-text {
+            font-size: 12px;
+            color: #888;
+            margin-top: 4px;
+        }
+
+        .action-btns {
+            display: flex;
+            gap: 10px;
+        }
+
+        .btn-retry {
+            flex: 1;
+            padding: 12px;
+            border-radius: 10px;
+            background: var(--primary);
+            color: #fff;
+            border: none;
+            font-size: 14px;
+            font-weight: 600;
+            text-align: center;
+            text-decoration: none;
+            display: block;
+        }
+
+            .btn-retry:hover {
+                opacity: .9;
+                color: #fff;
+            }
+
+        .btn-home {
+            flex: 1;
+            padding: 12px;
+            border-radius: 10px;
+            background: #fff;
+            color: #555;
+            border: 1px solid #e8e7e2;
+            font-size: 14px;
+            font-weight: 600;
+            text-align: center;
+            text-decoration: none;
+            display: block;
+        }
+
+            .btn-home:hover {
+                background: #f5f5f3;
+                color: #333;
+            }
+    </style>
+}
+
+<div class="result-wrap">
+
+    <!-- Result hero -->
+    <div class="result-hero">
+        <!-- SVG ring -->
+        <div class="result-ring">
+            <svg width="140" height="140" viewBox="0 0 140 140">
+                <circle cx="70" cy="70" r="58"
+                        fill="none" stroke="#f0f0ee" stroke-width="10" />
+                <circle cx="70" cy="70" r="58"
+                        fill="none"
+                        stroke="@gradeColor"
+                        stroke-width="10"
+                        stroke-linecap="round"
+                        stroke-dasharray="364.4"
+                        stroke-dashoffset="@(364.4 - (364.4 * Model.ScorePercent / 100))"
+                        transform="rotate(-90 70 70)"
+                        id="result-ring" />
+            </svg>
+            <div class="ring-label">
+                <div class="ring-pct" style="color: @gradeColor;">
+                    @Model.ScorePercent%
+                </div>
+                <div class="ring-sub">score</div>
+            </div>
+        </div>
+
+        <div class="grade-badge"
+             style="background: @gradeColor + " 22"; color: @gradeColor;">
+            @grade
+        </div>
+
+        <div class="stats-row">
+            <div class="stat-item">
+                <div class="stat-num" style="color:#1D9E75;">@Model.CorrectCount</div>
+                <div class="stat-lbl">সঠিক</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-num" style="color:#E24B4A;">@Model.WrongCount</div>
+                <div class="stat-lbl">ভুল</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-num" style="color:#888;">@Model.TotalQuestions</div>
+                <div class="stat-lbl">মোট প্রশ্ন</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Wrong questions review -->
+    @if (Model.WrongQuestions.Any())
+    {
+        <div class="wrong-card">
+            <div class="wrong-card-header">
+                <i class="bi bi-x-circle me-1"></i>
+                ভুল হয়েছে (@Model.WrongCount টি) — Review করো
+            </div>
+            <div>
+                @foreach (var q in Model.WrongQuestions)
+                {
+                    <div class="wrong-item">
+                        <div class="wrong-q">@q.QuestionText</div>
+                        <span class="correct-tag">
+                            <i class="bi bi-check2 me-1"></i>
+                            সঠিক উত্তর: @q.CorrectAnswer —
+                            @(q.CorrectAnswer == "A" ? q.OptionA
+                                                : q.CorrectAnswer == "B" ? q.OptionB
+                                                : q.CorrectAnswer == "C" ? q.OptionC
+                                                : q.OptionD)
+                </span>
+                @if (!string.IsNullOrEmpty(q.Explanation))
+                        {
+                            <div class="expl-text">
+                                <i class="bi bi-info-circle me-1"></i>@q.Explanation
+                            </div>
+                        }
+                    </div>
+                }
+            </div>
+        </div>
+    }
+    else
+    {
+        <div style="background:var(--teal-lt);border:1px solid #5DCAA5;
+                        border-radius:12px;padding:20px;text-align:center;
+                        color:#085041;margin-bottom:20px;">
+            <i class="bi bi-trophy-fill" style="font-size:28px;"></i>
+            <div style="font-size:15px;font-weight:700;margin-top:8px;">
+                Perfect Score! সব উত্তর সঠিক! 🎉
+            </div>
+        </div>
+    }
+
+    <!-- Action buttons -->
+    <div class="action-btns">
+        <a asp-action="StartQuiz" asp-controller="Mcq"
+           asp-route-category="@Model.Category"
+           class="btn-retry">
+            <i class="bi bi-arrow-clockwise me-1"></i>আবার দাও
+        </a>
+        <a asp-action="Index" asp-controller="Mcq" class="btn-home">
+            <i class="bi bi-list-ul me-1"></i>MCQ List
+        </a>
+        <a asp-action="Index" asp-controller="Home" class="btn-home">
+            <i class="bi bi-grid me-1"></i>Dashboard
+        </a>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        setSidebarProgress(0);
+
+        // Ring animation
+        const ring = document.getElementById('result-ring');
+        if (ring) {
+            const target = parseFloat(ring.getAttribute('stroke-dashoffset'));
+            ring.style.strokeDashoffset = '364.4';
+            ring.style.transition = 'stroke-dashoffset 1.2s ease';
+            setTimeout(() => { ring.style.strokeDashoffset = target; }, 150);
+        }
+    </script>
+}

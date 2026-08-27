@@ -1,0 +1,378 @@
+﻿@model List<ITSoftware.Models.Syllabus>
+@{
+    ViewData["Title"] = "Syllabus & Guidelines";
+    ViewData["Subtitle"] = "পরীক্ষার সিলেবাস এবং নির্দেশিকা";
+}
+
+@section Styles {
+    <style>
+        .upload-zone {
+            border: 2px dashed #d0cfe8;
+            border-radius: 12px;
+            padding: 32px;
+            text-align: center;
+            background: #fafaf8;
+            cursor: pointer;
+            transition: all .2s;
+        }
+
+            .upload-zone:hover,
+            .upload-zone.dragover {
+                border-color: var(--primary);
+                background: var(--primary-lt);
+            }
+
+            .upload-zone .upload-icon {
+                font-size: 40px;
+                color: var(--primary);
+                margin-bottom: 10px;
+            }
+
+            .upload-zone .upload-text {
+                font-size: 14px;
+                color: #555;
+            }
+
+                .upload-zone .upload-text span {
+                    color: var(--primary);
+                    font-weight: 600;
+                }
+
+            .upload-zone .upload-hint {
+                font-size: 12px;
+                color: #aaa;
+                margin-top: 4px;
+            }
+
+        .file-card {
+            background: #fff;
+            border: 1px solid #e8e7e2;
+            border-radius: 12px;
+            padding: 16px 20px;
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            transition: box-shadow .2s;
+        }
+
+            .file-card:hover {
+                box-shadow: 0 4px 12px rgba(0,0,0,.06);
+            }
+
+        .file-type-icon {
+            width: 44px;
+            height: 44px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            flex-shrink: 0;
+        }
+
+        .file-type-pdf {
+            background: #FAECE7;
+            color: #993C1D;
+        }
+
+        .file-type-image {
+            background: #E8F5E9;
+            color: #2E7D32;
+        }
+        .file-type-docx {
+            background: #E6F1FB;
+            color: #185FA5;
+        }
+
+        .file-name {
+            font-size: 14px;
+            font-weight: 600;
+            color: #1a1a1a;
+        }
+
+        .file-meta {
+            font-size: 12px;
+            color: #888;
+            margin-top: 2px;
+        }
+
+        .btn-view {
+            font-size: 12px;
+            padding: 6px 12px;
+            border-radius: 6px;
+            background: var(--primary-lt);
+            color: var(--primary);
+            border: 1px solid var(--primary-md);
+            text-decoration: none;
+            white-space: nowrap;
+        }
+
+            .btn-view:hover {
+                background: var(--primary-md);
+                color: var(--primary);
+            }
+
+        .btn-delete {
+            font-size: 12px;
+            padding: 6px 12px;
+            border-radius: 6px;
+            background: #FAECE7;
+            color: #993C1D;
+            border: 1px solid #F0997B;
+            cursor: pointer;
+            white-space: nowrap;
+        }
+
+            .btn-delete:hover {
+                background: #F5C4B3;
+            }
+
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #aaa;
+        }
+
+            .empty-state i {
+                font-size: 48px;
+                margin-bottom: 12px;
+                display: block;
+            }
+
+            .empty-state p {
+                font-size: 14px;
+            }
+    </style>
+}
+
+<!-- Alert messages -->
+@if (TempData["Success"] != null)
+{
+    <div class="alert d-flex align-items-center gap-2 mb-4"
+         style="background:#E1F5EE; border:1px solid #5DCAA5;
+                    border-radius:10px; color:#085041; font-size:13px;">
+        <i class="bi bi-check-circle-fill"></i>
+        @TempData["Success"]
+    </div>
+}
+@if (TempData["Error"] != null)
+{
+    <div class="alert d-flex align-items-center gap-2 mb-4"
+         style="background:#FAECE7; border:1px solid #F0997B;
+                    border-radius:10px; color:#712B13; font-size:13px;">
+        <i class="bi bi-exclamation-circle-fill"></i>
+        @TempData["Error"]
+    </div>
+}
+
+<div class="row g-4">
+
+    <!-- ══ Left — Upload panel ══ -->
+    <div class="col-12 col-lg-4">
+        <div style="background:#fff; border:1px solid #e8e7e2;
+                    border-radius:12px; overflow:hidden;">
+            <div style="padding:14px 18px; border-bottom:1px solid #f0f0ee;">
+                <div style="font-size:13px; font-weight:600;">
+                    <i class="bi bi-cloud-upload me-1" style="color:var(--primary);"></i>
+                    নতুন File Upload করো
+                </div>
+            </div>
+            <div style="padding:18px;">
+                <form asp-action="Upload" asp-controller="Syllabus"
+                      method="post" enctype="multipart/form-data" id="uploadForm">
+                    @Html.AntiForgeryToken()
+
+                    <!-- Drag & Drop Zone -->
+                    <div class="upload-zone mb-3" id="dropZone"
+                         onclick="document.getElementById('fileInput').click()">
+                        <div class="upload-icon">
+                            <i class="bi bi-file-earmark-arrow-up"></i>
+                        </div>
+                        <div class="upload-text">
+                            File <span>drag করো</span> অথবা <span>ক্লিক করো</span>
+                        </div>
+                        <div class="upload-hint">PDF, DOCX, JPG, PNG — সর্বোচ্চ 20MB</div>
+                        <div id="selectedFileName"
+                             style="margin-top:8px; font-size:12px;
+                                    color:var(--primary); font-weight:600;
+                                    display:none;">
+                        </div>
+                    </div>
+
+                    <input type="file" id="fileInput" name="file"
+                           accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
+                           style="display:none"
+                           onchange="showFileName(this)" />
+
+                    <div class="mb-3">
+                        <label style="font-size:12px; font-weight:600;
+                                      color:#555; margin-bottom:4px; display:block;">
+                            Title <span style="color:red;">*</span>
+                        </label>
+                        <input type="text" name="title" required
+                               placeholder="যেমন: BPSC Syllabus 2025"
+                               class="form-control form-control-sm"
+                               style="border-radius:8px; font-size:13px;" />
+                    </div>
+
+                    <div class="mb-3">
+                        <label style="font-size:12px; font-weight:600;
+                                      color:#555; margin-bottom:4px; display:block;">
+                            Description (ঐচ্ছিক)
+                        </label>
+                        <textarea name="description" rows="2"
+                                  placeholder="সংক্ষিপ্ত বিবরণ..."
+                                  class="form-control form-control-sm"
+                                  style="border-radius:8px; font-size:13px; resize:none;">
+                        </textarea>
+                    </div>
+
+                    <button type="submit"
+                            style="width:100%; padding:10px; border-radius:8px;
+                                   background:var(--primary); color:#fff;
+                                   border:none; font-size:13px; font-weight:600;
+                                   cursor:pointer;">
+                        <i class="bi bi-cloud-upload me-1"></i>
+                        Upload করো
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- ══ Right — Uploaded files list ══ -->
+    <div class="col-12 col-lg-8">
+        <div style="background:#fff; border:1px solid #e8e7e2;
+                    border-radius:12px; overflow:hidden;">
+            <div style="padding:14px 18px; border-bottom:1px solid #f0f0ee;
+                        display:flex; align-items:center; justify-content:space-between;">
+                <div style="font-size:13px; font-weight:600;">
+                    <i class="bi bi-folder2-open me-1" style="color:var(--primary);"></i>
+                    Uploaded Files
+                </div>
+                <span style="font-size:12px; background:#EEEDFE; color:#534AB7;
+                             padding:3px 10px; border-radius:20px; font-weight:600;">
+                    @Model.Count টি ফাইল
+                </span>
+            </div>
+
+            <div style="padding:16px;">
+                @if (!Model.Any())
+                {
+                    <div class="empty-state">
+                        <i class="bi bi-file-earmark-x"></i>
+                        <p>
+                            এখনো কোনো file upload করা হয়নি।<br />
+                            বাম পাশ থেকে upload করো।
+                        </p>
+                    </div>
+                }
+                else
+                {
+                    <div class="d-flex flex-column gap-3">
+                        @foreach (var item in Model)
+                        {
+                            // System.IO.Path ব্যবহার করা হয়েছে এবং item.FilePath দেওয়া হয়েছে
+                            var ext = System.IO.Path.GetExtension(item.FilePath ?? "").ToLower();
+
+                            var icon = ext == ".pdf" ? "bi-filetype-pdf" : "bi-filetype-docx";
+                            var cls = ext == ".pdf" ? "file-type-pdf" : "file-type-docx";
+
+                            <div class="file-card">
+                                <!-- Icon -->
+                                <div class="file-type-icon @cls">
+                                    <i class="bi @icon"></i>
+                                </div>
+
+                                <!-- Info -->
+                                <div style="flex:1; min-width:0;">
+                                    <div class="file-name text-truncate">
+                                        @item.Title
+                                    </div>
+                                    <div class="file-meta">
+                                        @item.FileName &bull;
+                                        @item.UploadedAt.ToString("dd MMM yyyy, hh:mm tt")
+                                    </div>
+                                    @if (!string.IsNullOrEmpty(item.Description))
+                                    {
+                                        <div style="font-size:12px; color:#888;
+                                                                margin-top:2px;">
+                                            @item.Description
+                                        </div>
+                                    }
+                                </div>
+
+                                <!-- Actions -->
+                                <div class="d-flex gap-2 flex-shrink-0">
+                                    <a href="@item.FilePath" target="_blank"
+                                       class="btn-view">
+                                        <i class="bi bi-eye me-1"></i>দেখো
+                                    </a>
+                                    <a href="@item.FilePath" download="@item.FileName"
+                                       class="btn-view">
+                                        <i class="bi bi-download me-1"></i>
+                                    </a>
+                                    <form asp-action="Delete" asp-controller="Syllabus"
+                                          method="post"
+                                          onsubmit="return confirm('এই file টি delete করবে?')">
+                                        @Html.AntiForgeryToken()
+                                        <input type="hidden" name="id" value="@item.Id" />
+                                        <button type="submit" class="btn-delete">
+                                            <i class="bi bi-trash"></i>
+                                        </button>
+                                    </form>
+                                </div>
+                            </div>
+                        }
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        // Sidebar progress
+        setSidebarProgress(0);
+
+        // File name দেখাও drop zone এ
+        function showFileName(input) {
+            const el = document.getElementById('selectedFileName');
+            if (input.files.length > 0) {
+                el.textContent = '✓ ' + input.files[0].name;
+                el.style.display = 'block';
+            }
+        }
+
+        // Drag & Drop
+        const zone  = document.getElementById('dropZone');
+        const input = document.getElementById('fileInput');
+
+        zone.addEventListener('dragover', e => {
+            e.preventDefault();
+            zone.classList.add('dragover');
+        });
+        zone.addEventListener('dragleave', () => {
+            zone.classList.remove('dragover');
+        });
+        zone.addEventListener('drop', e => {
+            e.preventDefault();
+            zone.classList.remove('dragover');
+            if (e.dataTransfer.files.length > 0) {
+                // DataTransfer থেকে file input এ set করো
+                const dt = new DataTransfer();
+                dt.items.add(e.dataTransfer.files[0]);
+                input.files = dt.files;
+                showFileName(input);
+            }
+        });
+
+        // Upload এ loading দেখাও
+        document.getElementById('uploadForm').addEventListener('submit', function () {
+            const btn = this.querySelector('button[type="submit"]');
+            btn.innerHTML = '<i class="bi bi-hourglass-split me-1"></i> Uploading...';
+            btn.disabled  = true;
+        });
+    </script>
+}
