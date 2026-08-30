@@ -171,6 +171,138 @@
             padding: 3px 10px;
             border-radius: 20px;
         }
+
+        /* ════════════════════════
+           MOBILE RESPONSIVE
+           ════════════════════════ */
+
+        /* Mobile hamburger button */
+        .hamburger {
+            display: none;
+            background: none;
+            border: 1px solid #e8e7e2;
+            border-radius: 8px;
+            padding: 6px 10px;
+            cursor: pointer;
+            font-size: 18px;
+            color: #555;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* Overlay যখন sidebar open থাকবে */
+        .sidebar-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,.4);
+            z-index: 99;
+        }
+
+            .sidebar-overlay.show {
+                display: block;
+            }
+
+        media (max-width: 768px) {
+            /* Sidebar default এ hidden */
+            .sidebar
+
+        {
+            transform: translateX(-100%);
+            transition: transform .25s ease;
+            z-index: 200;
+        }
+
+        /* Sidebar open হলে */
+        .sidebar.mobile-open {
+            transform: translateX(0);
+        }
+
+        /* Main content full width নেবে */
+        .main-content {
+            margin-left: 0 !important;
+        }
+
+        /* Hamburger দেখাবে */
+        .hamburger {
+            display: flex;
+        }
+
+        /* Topbar adjust */
+        .topbar {
+            padding: 10px 16px;
+            gap: 10px;
+        }
+
+        .topbar-title {
+            font-size: 14px;
+        }
+
+        .topbar-sub {
+            font-size: 11px;
+        }
+
+        /* Page body padding কমাও */
+        .page-body {
+            padding: 16px;
+        }
+
+        /* Date hide করো mobile এ */
+        .topbar-date {
+            display: none;
+        }
+
+        }
+
+        /* ── Desktop Sidebar Collapse ── */
+        body.sidebar-collapsed {
+            --sidebar-w: 80px; /* Collapse হলে সাইডবারের সাইজ */
+        }
+
+            /* Collapse অবস্থায় টেক্সট এবং ব্যাজ হাইড করার জন্য */
+            body.sidebar-collapsed .brand-text,
+            body.sidebar-collapsed .nav-label,
+            body.sidebar-collapsed .nav-badge,
+            body.sidebar-collapsed .sidebar-progress-label,
+            body.sidebar-collapsed .progress-thin,
+            body.sidebar-collapsed .nav-text {
+                display: none !important;
+            }
+
+            /* Collapse অবস্থায় আইকনগুলো মাঝখানে আনার জন্য */
+            body.sidebar-collapsed .sidebar-brand {
+                justify-content: center !important;
+                padding: 20px 10px 16px;
+            }
+
+                body.sidebar-collapsed .sidebar-brand .toggle-btn {
+                    display: none; /* Collapse অবস্থায় ৩ ডট হাইড করতে চাইলে */
+                }
+
+            body.sidebar-collapsed .nav-item a {
+                justify-content: center;
+                padding: 12px;
+            }
+
+                body.sidebar-collapsed .nav-item a .nav-icon {
+                    font-size: 20px;
+                }
+
+        /* ৩ ডট বাটনের ডিজাইন */
+        .toggle-btn {
+            background: none;
+            border: none;
+            color: #888;
+            font-size: 20px;
+            cursor: pointer;
+            margin-left: auto;
+        }
+
+        /* Smooth transition এর জন্য */
+        .sidebar, .main-content {
+            transition: width 0.3s ease, margin-left 0.3s ease, transform 0.25s ease;
+        }
+
     </style>
 
     @await RenderSectionAsync("Styles", required: false)
@@ -180,11 +312,15 @@
     <!-- ══ Sidebar ══ -->
     <aside class="sidebar">
         <div class="sidebar-brand d-flex align-items-center gap-2">
-            <div class="brand-icon"><i class="bi bi-mortarboard-fill"></i></div>
-            <div>
+            <div class="brand-icon" onclick="toggleDesktopSidebar()" style="cursor:pointer;"><i class="bi bi-mortarboard-fill"></i></div>
+            <div class="brand-text">
                 <div class="brand-name">Exam Prep</div>
                 <div class="brand-sub">আমার প্রস্তুতি</div>
             </div>
+            <!-- 3 Dot Button -->
+            <button class="toggle-btn" onclick="handleThreeDotClick()">
+                <i class="bi bi-three-dots-vertical"></i>
+            </button>
         </div>
 
         <nav class="sidebar-nav">
@@ -192,7 +328,8 @@
             <div class="nav-item">
                 <a asp-controller="Home" asp-action="Index"
                    class="@(ViewContext.RouteData.Values["controller"]?.ToString() == "Home" ? "active" : "")">
-                    <i class="bi bi-grid-1x2 nav-icon"></i> Dashboard
+                    <i class="bi bi-grid-1x2 nav-icon"></i> 
+                    <span class="nav-text">Dashboard</span>
                 </a>
             </div>
 
@@ -201,7 +338,7 @@
                 <a asp-controller="Syllabus" asp-action="Index"
                    class="@(ViewContext.RouteData.Values["controller"]?.ToString() == "Syllabus" ? "active" : "")">
                     <i class="bi bi-file-earmark-text nav-icon"></i>
-                    Syllabus &amp; Guidelines
+                    <span class="nav-text">Syllabus &amp; Guidelines</span>
                     <span class="nav-badge">1</span>
                 </a>
             </div>
@@ -234,6 +371,14 @@
                    class="@(ViewContext.RouteData.Values["controller"]?.ToString() == "NonTech" ? "active" : "")">
                     <i class="bi bi-people nav-icon"></i>
                     Non-Technical Prep
+                    <span class="nav-badge">5</span>
+                </a>
+            </div>
+            <div class="nav-item">
+                <a asp-controller="StudyPlan" asp-action="Index"
+                   class="@(ViewContext.RouteData.Values["controller"]?.ToString() == "StudyPlan" ? "active" : "")">
+                    <i class="bi bi-people nav-icon"></i>
+                    Study Plan
                     <span class="nav-badge">5</span>
                 </a>
             </div>
@@ -271,11 +416,23 @@
                      style="width: 0%"></div>
             </div>
         </div>
+        <!-- Sidebar close button — mobile only -->
+        <div style="padding:10px 16px;display:flex;justify-content:flex-end;">
+            <button onclick="toggleSidebar()"
+                    style="display:none;background:none;border:none;
+                   font-size:20px;color:#888;cursor:pointer;"
+                    id="sidebar-close-btn">
+                <i class="bi bi-x-lg"></i>
+            </button>
+        </div>
     </aside>
 
     <!-- ══ Main ══ -->
     <div class="main-content">
         <div class="topbar">
+            <button class="hamburger" onclick="toggleSidebar()">
+                <i class="bi bi-list"></i>
+            </button>
             <div>
                 <div class="topbar-title">@ViewData["Title"]</div>
                 <div class="topbar-sub">@ViewData["Subtitle"]</div>
@@ -303,6 +460,61 @@
             document.getElementById('sidebar-progress-bar').style.width = pct + '%';
             document.getElementById('sidebar-progress-pct').textContent  = pct + '%';
         }
+    </script>
+
+    <!-- Mobile overlay -->
+    <div class="sidebar-overlay" id="sidebarOverlay" onclick="toggleSidebar()"></div>
+
+    <script>
+        // Desktop Sidebar Toggle
+        function toggleDesktopSidebar() {
+            if (window.innerWidth > 768) {
+                document.body.classList.toggle('sidebar-collapsed');
+            }
+        }
+
+        // 3 Dot Click Handler (Mobile & Desktop)
+        function handleThreeDotClick() {
+            if (window.innerWidth > 768) {
+                // ডেস্কটপে সাইডবার ছোট/বড় করবে
+                toggleDesktopSidebar();
+            } else {
+                // মোবাইলে ৩ ডটে ক্লিক করলে সাইডবার ফোর্স ক্লোজ করবে
+                const sidebar = document.querySelector('.sidebar');
+                const overlay = document.getElementById('sidebarOverlay');
+                const closeBtn = document.getElementById('sidebar-close-btn');
+
+                sidebar.classList.remove('mobile-open');
+                overlay.classList.remove('show');
+                if (closeBtn) closeBtn.style.display = 'none';
+            }
+        }
+
+        // Main Sidebar Toggle (Hamburger Menu & Overlay)
+        function toggleSidebar() {
+            const sidebar  = document.querySelector('.sidebar');
+            const overlay  = document.getElementById('sidebarOverlay');
+            const closeBtn = document.getElementById('sidebar-close-btn');
+            const isOpen   = sidebar.classList.contains('mobile-open');
+
+            if (isOpen) {
+                sidebar.classList.remove('mobile-open');
+                overlay.classList.remove('show');
+                if (closeBtn) closeBtn.style.display = 'none';
+            } else {
+                sidebar.classList.add('mobile-open');
+                overlay.classList.add('show');
+                if (closeBtn) closeBtn.style.display = 'block';
+            }
+        }
+
+        // Window resize হলে sidebar reset করো
+        window.addEventListener('resize', () => {
+            if (window.innerWidth > 768) {
+                document.querySelector('.sidebar').classList.remove('mobile-open');
+                document.getElementById('sidebarOverlay').classList.remove('show');
+            }
+        });
     </script>
 </body>
 </html>

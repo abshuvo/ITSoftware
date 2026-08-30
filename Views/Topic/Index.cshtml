@@ -1,0 +1,1201 @@
+﻿@model ITSoftware.Models.ViewModels.TopicIndexViewModel
+@{
+    ViewData["Title"] = "Important Topics";
+    ViewData["Subtitle"] = "তোমার প্রস্তুতির রোডম্যাপ";
+
+    var notStarted = Model.Topics.Where(t => t.Progress == 0).ToList();
+    var inProgress = Model.Topics.Where(t => t.Progress > 0 && !t.IsCompleted).ToList();
+    var done = Model.Topics.Where(t => t.IsCompleted).ToList();
+
+    string CatColor(string? cat) => (cat ?? "").ToLower() switch
+    {
+        "dsa" or "data structure" => "#534AB7",
+        "dbms" or "database" => "#1D9E75",
+        "os" or "operating" => "#BA7517",
+        "network" or "networking" => "#185FA5",
+        "oop" => "#993556",
+        "system design" => "#993C1D",
+        "algorithm" => "#085041",
+        _ => "#534AB7"
+    };
+
+    string CatBg(string? cat) => (cat ?? "").ToLower() switch
+    {
+        "dsa" or "data structure" => "#EEEDFE",
+        "dbms" or "database" => "#E1F5EE",
+        "os" or "operating" => "#FAEEDA",
+        "network" or "networking" => "#E6F1FB",
+        "oop" => "#FBEAF0",
+        "system design" => "#FAECE7",
+        "algorithm" => "#E1F5EE",
+        _ => "#EEEDFE"
+    };
+}
+
+@section Styles {
+    <style>
+        :root {
+            --col-gap: 16px;
+        }
+
+        /* ── Page layout ── */
+        .topic-page {
+            display: grid;
+            grid-template-columns: 220px 1fr;
+            gap: 20px;
+            align-items: start;
+        }
+
+        @@media (max-width: 860px) {
+            .topic-page {
+                grid-template-columns: 1fr;
+            }
+
+            .topic-sidebar {
+                display: none;
+            }
+        }
+
+        /* ── Sidebar ── */
+        .topic-sidebar {
+            background: #fff;
+            border: 1px solid #e8e7e2;
+            border-radius: 12px;
+            overflow: hidden;
+            position: sticky;
+            top: 80px;
+        }
+
+        .tsb-header {
+            padding: 13px 16px;
+            border-bottom: 1px solid #f0f0ee;
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: .07em;
+            text-transform: uppercase;
+            color: #aaa;
+        }
+
+        .tsb-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 9px 16px;
+            font-size: 13px;
+            color: #555;
+            text-decoration: none;
+            border-left: 3px solid transparent;
+            transition: all .15s;
+            cursor: pointer;
+        }
+
+            .tsb-item:hover {
+                background: #f5f5f3;
+                color: #1a1a1a;
+            }
+
+            .tsb-item.active {
+                background: var(--primary-lt);
+                color: var(--primary);
+                border-left-color: var(--primary);
+                font-weight: 600;
+            }
+
+        .tsb-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            flex-shrink: 0;
+        }
+
+        .tsb-count {
+            margin-left: auto;
+            font-size: 11px;
+            background: #f0f0ee;
+            color: #888;
+            padding: 2px 7px;
+            border-radius: 10px;
+        }
+
+        .tsb-item.active .tsb-count {
+            background: var(--primary-md);
+            color: var(--primary);
+        }
+
+        .tsb-divider {
+            height: 1px;
+            background: #f0f0ee;
+            margin: 4px 0;
+        }
+
+        /* ── Overall progress bar in sidebar ── */
+        .tsb-progress {
+            padding: 12px 16px;
+            border-top: 1px solid #f0f0ee;
+        }
+
+        .tsb-progress-label {
+            display: flex;
+            justify-content: space-between;
+            font-size: 11px;
+            color: #888;
+            margin-bottom: 6px;
+        }
+
+            .tsb-progress-label span:last-child {
+                color: var(--primary);
+                font-weight: 700;
+            }
+
+        .tsb-bar {
+            height: 5px;
+            background: #f0f0ee;
+            border-radius: 3px;
+            overflow: hidden;
+        }
+
+        .tsb-bar-fill {
+            height: 100%;
+            background: var(--primary);
+            border-radius: 3px;
+            transition: width .6s ease;
+        }
+
+        /* ── Top stats strip ── */
+        .stats-strip {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 10px;
+            margin-bottom: 18px;
+        }
+
+        .stat-pill {
+            background: #fff;
+            border: 1px solid #e8e7e2;
+            border-radius: 10px;
+            padding: 12px 14px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            cursor: pointer;
+            transition: all .15s;
+            text-decoration: none;
+        }
+
+            .stat-pill:hover {
+                box-shadow: 0 3px 10px rgba(0,0,0,.06);
+                transform: translateY(-1px);
+            }
+
+            .stat-pill.active {
+                border-width: 2px;
+            }
+
+        .stat-pill-icon {
+            width: 34px;
+            height: 34px;
+            border-radius: 9px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+            flex-shrink: 0;
+        }
+
+        .stat-pill-num {
+            font-size: 20px;
+            font-weight: 800;
+            line-height: 1;
+        }
+
+        .stat-pill-lbl {
+            font-size: 11px;
+            color: #888;
+            margin-top: 2px;
+        }
+
+        /* ── Kanban columns ── */
+        .kanban {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: var(--col-gap);
+            align-items: start;
+        }
+
+        @@media (max-width: 1100px) {
+            .kanban {
+                grid-template-columns: 1fr 1fr;
+            }
+        }
+
+        @@media (max-width: 700px) {
+            .kanban {
+                grid-template-columns: 1fr;
+            }
+
+            .stats-strip {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        .kanban-col {
+            background: #f5f5f3;
+            border-radius: 12px;
+            padding: 12px;
+            min-height: 200px;
+        }
+
+        .kanban-col-header {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 4px 4px 12px;
+            border-bottom: 1px solid #eae9e4;
+            margin-bottom: 10px;
+        }
+
+        .col-label {
+            font-size: 12px;
+            font-weight: 700;
+            letter-spacing: .05em;
+            text-transform: uppercase;
+        }
+
+        .col-badge {
+            margin-left: auto;
+            font-size: 11px;
+            font-weight: 700;
+            padding: 2px 8px;
+            border-radius: 10px;
+        }
+
+        /* ── Topic card ── */
+        .topic-card {
+            background: #fff;
+            border: 1px solid #e8e7e2;
+            border-radius: 10px;
+            padding: 14px;
+            margin-bottom: 10px;
+            transition: box-shadow .15s, transform .15s;
+            position: relative;
+            overflow: hidden;
+        }
+
+            .topic-card:hover {
+                box-shadow: 0 4px 14px rgba(0,0,0,.08);
+                transform: translateY(-1px);
+            }
+
+            .topic-card.is-done {
+                border-color: #5DCAA5;
+                background: linear-gradient(135deg, #fff 0%, #f0fbf6 100%);
+            }
+
+                .topic-card.is-done::before {
+                    content: '';
+                    position: absolute;
+                    top: 0;
+                    left: 0;
+                    width: 3px;
+                    height: 100%;
+                    background: #1D9E75;
+                    border-radius: 3px 0 0 3px;
+                }
+
+        /* Ring progress */
+        .card-top {
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+
+        .ring-wrap {
+            position: relative;
+            width: 44px;
+            height: 44px;
+            flex-shrink: 0;
+        }
+
+        .ring-svg {
+            transform: rotate(-90deg);
+        }
+
+        .ring-track {
+            fill: none;
+            stroke: #f0f0ee;
+            stroke-width: 4;
+        }
+
+        .ring-prog {
+            fill: none;
+            stroke-width: 4;
+            stroke-linecap: round;
+            transition: stroke-dashoffset .7s ease;
+        }
+
+        .ring-center-text {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 9px;
+            font-weight: 800;
+            color: #333;
+            line-height: 1;
+            text-align: center;
+        }
+
+        .card-info {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .card-title {
+            font-size: 13px;
+            font-weight: 600;
+            color: #1a1a1a;
+            line-height: 1.3;
+            margin-bottom: 5px;
+        }
+
+            .card-title.done-title {
+                text-decoration: line-through;
+                opacity: .6;
+            }
+
+        .cat-chip {
+            display: inline-block;
+            font-size: 10px;
+            font-weight: 700;
+            padding: 2px 8px;
+            border-radius: 20px;
+            letter-spacing: .03em;
+        }
+
+        /* Progress slider */
+        .progress-row {
+            margin-top: 10px;
+        }
+
+        .prog-label {
+            display: flex;
+            justify-content: space-between;
+            font-size: 10px;
+            color: #aaa;
+            margin-bottom: 4px;
+        }
+
+        .prog-slider {
+            width: 100%;
+            height: 4px;
+            border-radius: 2px;
+            -webkit-appearance: none;
+            appearance: none;
+            background: #f0f0ee;
+            outline: none;
+            cursor: pointer;
+        }
+
+            .prog-slider::-webkit-slider-thumb {
+                -webkit-appearance: none;
+                width: 12px;
+                height: 12px;
+                border-radius: 50%;
+                background: var(--primary);
+                cursor: pointer;
+                border: 2px solid #fff;
+                box-shadow: 0 0 0 1px var(--primary);
+                transition: transform .1s;
+            }
+
+                .prog-slider::-webkit-slider-thumb:hover {
+                    transform: scale(1.3);
+                }
+
+        /* Notes area */
+        .notes-row {
+            margin-top: 8px;
+        }
+
+        .notes-text {
+            font-size: 11px;
+            color: #888;
+            line-height: 1.4;
+            cursor: pointer;
+            border-radius: 4px;
+            padding: 3px 5px;
+            margin: -3px -5px;
+            transition: background .15s;
+        }
+
+            .notes-text:hover {
+                background: #f5f5f3;
+            }
+
+        .notes-input {
+            width: 100%;
+            font-size: 11px;
+            color: #555;
+            border: 1px solid var(--primary-md);
+            border-radius: 6px;
+            padding: 5px 8px;
+            outline: none;
+            resize: none;
+            font-family: inherit;
+            display: none;
+        }
+
+        /* Card actions */
+        .card-actions {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            margin-top: 10px;
+            padding-top: 8px;
+            border-top: 1px solid #f5f5f3;
+        }
+
+        .ca-btn {
+            font-size: 11px;
+            padding: 4px 9px;
+            border-radius: 6px;
+            border: 1px solid #e8e7e2;
+            background: #fff;
+            color: #555;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            transition: all .15s;
+        }
+
+            .ca-btn.done-btn {
+                border-color: #5DCAA5;
+                color: #085041;
+                background: var(--teal-lt);
+            }
+
+                .ca-btn.done-btn:hover {
+                    background: #5DCAA5;
+                    color: #fff;
+                }
+
+            .ca-btn.undone-btn {
+                border-color: #5DCAA5;
+                color: #1D9E75;
+            }
+
+                .ca-btn.undone-btn:hover {
+                    background: var(--teal-lt);
+                }
+
+            .ca-btn:hover {
+                background: #f5f5f3;
+                color: #1a1a1a;
+            }
+
+        .ca-del {
+            margin-left: auto;
+            color: #ccc;
+            border-color: transparent;
+            background: transparent;
+        }
+
+            .ca-del:hover {
+                color: #993C1D;
+                background: #FAECE7;
+                border-color: #F0997B;
+            }
+
+        /* Done checkmark burst */
+        @@keyframes burst {
+            0% {
+                transform: scale(0) rotate(-10deg);
+                opacity: 0;
+            }
+
+            60% {
+                transform: scale(1.2) rotate(5deg);
+                opacity: 1;
+            }
+
+            100% {
+                transform: scale(1) rotate(0deg);
+                opacity: 1;
+            }
+        }
+
+        .done-mark {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            width: 22px;
+            height: 22px;
+            background: #1D9E75;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #fff;
+            font-size: 12px;
+            animation: burst .4s ease forwards;
+        }
+
+        /* ── Add topic panel ── */
+        .add-panel {
+            background: #fff;
+            border: 1px solid #e8e7e2;
+            border-radius: 12px;
+            overflow: hidden;
+            margin-bottom: 18px;
+        }
+
+        .add-panel-header {
+            padding: 12px 16px;
+            font-size: 13px;
+            font-weight: 600;
+            border-bottom: 1px solid #f0f0ee;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            cursor: pointer;
+        }
+
+            .add-panel-header:hover {
+                background: #fafaf8;
+            }
+
+        .add-panel-body {
+            padding: 14px 16px;
+        }
+
+        .add-form {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+            .add-form input,
+            .add-form select {
+                border: 1px solid #e8e7e2;
+                border-radius: 8px;
+                padding: 8px 12px;
+                font-size: 13px;
+                outline: none;
+                transition: border-color .15s;
+            }
+
+                .add-form input:focus,
+                .add-form select:focus {
+                    border-color: var(--primary);
+                }
+
+            .add-form .inp-title {
+                flex: 2;
+                min-width: 160px;
+            }
+
+            .add-form .inp-cat {
+                flex: 1;
+                min-width: 120px;
+            }
+
+            .add-form button {
+                padding: 8px 18px;
+                border-radius: 8px;
+                background: var(--primary);
+                color: #fff;
+                border: none;
+                font-size: 13px;
+                font-weight: 600;
+                cursor: pointer;
+                transition: opacity .15s;
+            }
+
+                .add-form button:hover {
+                    opacity: .9;
+                }
+
+        /* Empty col */
+        .col-empty {
+            text-align: center;
+            padding: 24px 10px;
+            color: #ccc;
+            font-size: 12px;
+        }
+
+            .col-empty i {
+                font-size: 28px;
+                display: block;
+                margin-bottom: 6px;
+            }
+
+
+        media (max-width: 860px) {
+            .topic-page
+
+        {
+            grid-template-columns: 1fr;
+        }
+
+        .topic-sidebar {
+            display: none; /* sidebar hidden, filter pills দিয়ে কাজ চলবে */
+        }
+
+        }
+
+        media (max-width: 768px) {
+            /* Stats strip — 2 column */
+            .stats-strip
+
+        {
+            grid-template-columns: repeat(2, 1fr);
+            gap: 8px;
+        }
+
+        .stat-pill {
+            padding: 10px;
+        }
+
+        .stat-pill-num {
+            font-size: 18px;
+        }
+
+        /* Kanban — single column */
+        .kanban {
+            grid-template-columns: 1fr;
+            gap: 12px;
+        }
+
+        /* Add form stack করো */
+        .add-form {
+            flex-direction: column;
+        }
+
+            .add-form input,
+            .add-form select,
+            .add-form button {
+                width: 100%;
+            }
+
+        /* Topic card ring ছোট করো */
+        .ring-wrap {
+            width: 36px;
+            height: 36px;
+        }
+
+        .ring-center-text {
+            font-size: 8px;
+        }
+
+        }
+
+        /* Mobile এ category filter pills দেখাবো */
+        .mobile-cat-pills {
+            display: none;
+            flex-wrap: wrap;
+            gap: 6px;
+            margin-bottom: 14px;
+        }
+        media (max-width: 860px) {
+            .mobile-cat-pills
+
+        {
+            display: flex;
+        }
+
+        }
+
+        .mob-pill {
+            font-size: 12px;
+            padding: 5px 12px;
+            border-radius: 20px;
+            border: 1px solid #e8e7e2;
+            background: #fff;
+            color: #555;
+            text-decoration: none;
+            transition: all .15s;
+        }
+
+            .mob-pill.active {
+                background: var(--primary);
+                color: #fff;
+                border-color: var(--primary);
+            }
+
+    </style>
+}
+
+@* Alerts *@
+@if (TempData["Success"] != null)
+{
+    <div class="alert mb-3"
+         style="background:#E1F5EE;border:1px solid #5DCAA5;
+                    border-radius:10px;color:#085041;font-size:13px;">
+        <i class="bi bi-check-circle-fill me-1"></i>@TempData["Success"]
+    </div>
+}
+@if (TempData["Error"] != null)
+{
+    <div class="alert mb-3"
+         style="background:#FAECE7;border:1px solid #F0997B;
+                    border-radius:10px;color:#712B13;font-size:13px;">
+        <i class="bi bi-exclamation-circle-fill me-1"></i>@TempData["Error"]
+    </div>
+}
+
+<div class="topic-page">
+
+    @* ══ Sidebar ══ *@
+    <aside class="topic-sidebar">
+        <div class="tsb-header">Filters</div>
+
+        @* Status filters *@
+        <a asp-action="Index" asp-controller="Topic"
+           asp-route-category="@Model.ActiveCategory"
+           class="tsb-item @(Model.ActiveStatus == null ? "active" : "")">
+            <span class="tsb-dot" style="background:#534AB7;"></span>
+            সব Topics
+            <span class="tsb-count">@Model.TotalCount</span>
+        </a>
+        <a asp-action="Index" asp-controller="Topic"
+           asp-route-category="@Model.ActiveCategory"
+           asp-route-status="notstarted"
+           class="tsb-item @(Model.ActiveStatus == "notstarted" ? "active" : "")">
+            <span class="tsb-dot" style="background:#ccc;"></span>
+            শুরু হয়নি
+            <span class="tsb-count">@Model.NotStartedCount</span>
+        </a>
+        <a asp-action="Index" asp-controller="Topic"
+           asp-route-category="@Model.ActiveCategory"
+           asp-route-status="inprogress"
+           class="tsb-item @(Model.ActiveStatus == "inprogress" ? "active" : "")">
+            <span class="tsb-dot" style="background:#BA7517;"></span>
+            চলছে
+            <span class="tsb-count">@Model.InProgressCount</span>
+        </a>
+        <a asp-action="Index" asp-controller="Topic"
+           asp-route-category="@Model.ActiveCategory"
+           asp-route-status="done"
+           class="tsb-item @(Model.ActiveStatus == "done" ? "active" : "")">
+            <span class="tsb-dot" style="background:#1D9E75;"></span>
+            সম্পন্ন
+            <span class="tsb-count">@Model.DoneCount</span>
+        </a>
+
+        @if (Model.Categories.Any())
+        {
+            <div class="tsb-divider"></div>
+            <div class="tsb-header" style="padding-top:10px;">Categories</div>
+
+            <a asp-action="Index" asp-controller="Topic"
+               asp-route-status="@Model.ActiveStatus"
+               class="tsb-item @(Model.ActiveCategory == null ? "active" : "")">
+                <i class="bi bi-grid" style="font-size:13px;"></i>
+                সব
+            </a>
+
+            @foreach (var cat in Model.Categories)
+            {
+                var cc = CatColor(cat);
+                <a asp-action="Index" asp-controller="Topic"
+                   asp-route-category="@cat"
+                   asp-route-status="@Model.ActiveStatus"
+                   class="tsb-item @(Model.ActiveCategory == cat ? "active" : "")">
+                    <span class="tsb-dot" style="background:@cc;"></span>
+                    @cat
+                </a>
+            }
+        }
+
+        <div class="tsb-progress">
+            <div class="tsb-progress-label">
+                <span>সামগ্রিক অগ্রগতি</span>
+                <span>@Model.OverallPercent%</span>
+            </div>
+            <div class="tsb-bar">
+                <div class="tsb-bar-fill"
+                     style="width:@Model.OverallPercent%;"></div>
+            </div>
+        </div>
+    </aside>
+
+    @* ══ Main content ══ *@
+    <div>
+
+        @* Stats strip *@
+        <div class="stats-strip">
+            <a asp-action="Index" asp-controller="Topic"
+               asp-route-category="@Model.ActiveCategory"
+               class="stat-pill @(Model.ActiveStatus == null ? "active" : "")"
+               style="@(Model.ActiveStatus == null ? "border-color:#534AB7;" : "")">
+                <div class="stat-pill-icon"
+                     style="background:#EEEDFE;color:#534AB7;">
+                    <i class="bi bi-collection"></i>
+                </div>
+                <div>
+                    <div class="stat-pill-num"
+                         style="color:#534AB7;">
+                        @Model.TotalCount
+                    </div>
+                    <div class="stat-pill-lbl">মোট Topics</div>
+                </div>
+            </a>
+
+            <a asp-action="Index" asp-controller="Topic"
+               asp-route-category="@Model.ActiveCategory"
+               asp-route-status="notstarted"
+               class="stat-pill @(Model.ActiveStatus == "notstarted" ? "active" : "")"
+               style="@(Model.ActiveStatus == "notstarted" ? "border-color:#888;" : "")">
+                <div class="stat-pill-icon"
+                     style="background:#f0f0ee;color:#888;">
+                    <i class="bi bi-circle"></i>
+                </div>
+                <div>
+                    <div class="stat-pill-num"
+                         style="color:#888;">
+                        @Model.NotStartedCount
+                    </div>
+                    <div class="stat-pill-lbl">শুরু হয়নি</div>
+                </div>
+            </a>
+
+            <a asp-action="Index" asp-controller="Topic"
+               asp-route-category="@Model.ActiveCategory"
+               asp-route-status="inprogress"
+               class="stat-pill @(Model.ActiveStatus == "inprogress" ? "active" : "")"
+               style="@(Model.ActiveStatus == "inprogress" ? "border-color:#BA7517;" : "")">
+                <div class="stat-pill-icon"
+                     style="background:#FAEEDA;color:#BA7517;">
+                    <i class="bi bi-hourglass-split"></i>
+                </div>
+                <div>
+                    <div class="stat-pill-num"
+                         style="color:#BA7517;">
+                        @Model.InProgressCount
+                    </div>
+                    <div class="stat-pill-lbl">চলছে</div>
+                </div>
+            </a>
+
+            <a asp-action="Index" asp-controller="Topic"
+               asp-route-category="@Model.ActiveCategory"
+               asp-route-status="done"
+               class="stat-pill @(Model.ActiveStatus == "done" ? "active" : "")"
+               style="@(Model.ActiveStatus == "done" ? "border-color:#1D9E75;" : "")">
+                <div class="stat-pill-icon"
+                     style="background:#E1F5EE;color:#1D9E75;">
+                    <i class="bi bi-check-circle-fill"></i>
+                </div>
+                <div>
+                    <div class="stat-pill-num"
+                         style="color:#1D9E75;">
+                        @Model.DoneCount
+                    </div>
+                    <div class="stat-pill-lbl">সম্পন্ন</div>
+                </div>
+            </a>
+        </div>
+
+        @* Add topic panel *@
+        <div class="add-panel">
+            <div class="add-panel-header" onclick="toggleAdd()">
+                <span>
+                    <i class="bi bi-plus-circle me-1"
+                       style="color:var(--primary);"></i>
+                    নতুন Topic যোগ করো
+                </span>
+                <i class="bi bi-chevron-down" id="add-chevron"></i>
+            </div>
+            <div class="add-panel-body" id="add-body">
+                <form asp-action="Add" asp-controller="Topic"
+                      method="post" class="add-form">
+                    @Html.AntiForgeryToken()
+                    <input type="text" name="title"
+                           class="inp-title"
+                           placeholder="Topic এর নাম লিখো..."
+                           required />
+                    <input type="text" name="category"
+                           class="inp-cat"
+                           list="catList"
+                           placeholder="Category (যেমন: DSA)"
+                           value="@Model.ActiveCategory" />
+                    <datalist id="catList">
+                        @foreach (var c in Model.Categories)
+                        {
+                            <option value="@c"></option>
+                        }
+                        @foreach (var q in new[]
+                                                { "DSA","DBMS","OS","Network","OOP",
+                                                "System Design","Algorithm","Math" })
+                        {
+                            <option value="@q"></option>
+                        }
+                    </datalist>
+                    <button type="submit">
+                        <i class="bi bi-plus me-1"></i>যোগ করো
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Mobile category pills — sidebar এর বদলে -->
+        @if (Model.Categories.Any())
+        {
+            <div class="mobile-cat-pills">
+                <a asp-action="Index" asp-controller="Topic"
+                   class="mob-pill @(Model.ActiveCategory == null ? "active" : "")">
+                    সব
+                </a>
+                @foreach (var cat in Model.Categories)
+                {
+                    <a asp-action="Index" asp-controller="Topic"
+                       asp-route-category="@cat"
+                       class="mob-pill @(Model.ActiveCategory == cat ? "active" : "")">
+                        @cat
+                    </a>
+                }
+            </div>
+        }
+
+        @* ── Kanban board ── *@
+        @if (!Model.Topics.Any())
+        {
+            <div style="text-align:center;padding:60px 20px;color:#aaa;">
+                <i class="bi bi-collection"
+                   style="font-size:48px;display:block;margin-bottom:12px;"></i>
+                <p style="font-size:14px;">
+                    এখনো কোনো topic নেই।<br />উপরে থেকে যোগ করো।
+                </p>
+            </div>
+        }
+        else
+        {
+            <div class="kanban">
+
+                @* Column 1 — Not Started *@
+                <div class="kanban-col">
+                    <div class="kanban-col-header">
+                        <i class="bi bi-circle"
+                           style="color:#aaa;font-size:14px;"></i>
+                        <span class="col-label" style="color:#888;">
+                            শুরু হয়নি
+                        </span>
+                        <span class="col-badge"
+                              style="background:#f0f0ee;color:#888;">
+                            @notStarted.Count
+                        </span>
+                    </div>
+
+                    @if (!notStarted.Any())
+                    {
+                        <div class="col-empty">
+                            <i class="bi bi-check2-all"></i>
+                            সব শুরু হয়েছে!
+                        </div>
+                    }
+                    else
+                    {
+                        foreach (var t in notStarted)
+                        {
+                            @await Html.PartialAsync(
+                            "_TopicCard",
+                                t,
+                                new ViewDataDictionary(ViewData)
+                                {
+                                { "ReturnCat", Model.ActiveCategory }
+                                })
+                                }
+                    }
+                </div>
+
+                @* Column 2 — In Progress *@
+                <div class="kanban-col"
+                     style="background:#FFFDF5;">
+                    <div class="kanban-col-header">
+                        <i class="bi bi-hourglass-split"
+                           style="color:#BA7517;font-size:14px;"></i>
+                        <span class="col-label" style="color:#BA7517;">
+                            চলছে
+                        </span>
+                        <span class="col-badge"
+                              style="background:#FAEEDA;color:#BA7517;">
+                            @inProgress.Count
+                        </span>
+                    </div>
+
+                    @if (!inProgress.Any())
+                    {
+                        <div class="col-empty">
+                            <i class="bi bi-hourglass"></i>
+                            কোনো topic চলমান নেই
+                        </div>
+                    }
+                    else
+                    {
+                        foreach (var t in inProgress)
+                        {
+                            @await Html.PartialAsync(
+                            "_TopicCard",
+                                t,
+                                new ViewDataDictionary(ViewData)
+                                {
+                                { "ReturnCat", Model.ActiveCategory }
+                                })
+                                }
+                    }
+                </div>
+
+                @* Column 3 — Done *@
+                <div class="kanban-col"
+                     style="background:#F3FCF8;">
+                    <div class="kanban-col-header">
+                        <i class="bi bi-check-circle-fill"
+                           style="color:#1D9E75;font-size:14px;"></i>
+                        <span class="col-label" style="color:#1D9E75;">
+                            সম্পন্ন
+                        </span>
+                        <span class="col-badge"
+                              style="background:#E1F5EE;color:#1D9E75;">
+                            @done.Count
+                        </span>
+                    </div>
+
+                    @if (!done.Any())
+                    {
+                        <div class="col-empty">
+                            <i class="bi bi-trophy"></i>
+                            এখনো কিছু সম্পন্ন হয়নি
+                        </div>
+                    }
+                    else
+                    {
+                        foreach (var t in done)
+                        {
+                            @await Html.PartialAsync(
+                            "_TopicCard",
+                                t,
+                                new ViewDataDictionary(ViewData)
+                                {
+                                { "ReturnCat", Model.ActiveCategory }
+                                })
+                                }
+                    }
+                </div>
+
+            </div>
+        }
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        setSidebarProgress(@Model.OverallPercent);
+
+        // ── Add panel toggle ──
+        let addOpen = true;
+        function toggleAdd() {
+            const body    = document.getElementById('add-body');
+            const chevron = document.getElementById('add-chevron');
+            addOpen       = !addOpen;
+            body.style.display = addOpen ? 'block' : 'none';
+            chevron.className  = addOpen
+                ? 'bi bi-chevron-up'
+                : 'bi bi-chevron-down';
+        }
+
+        // ── Progress slider ──
+        function onSliderInput(el, topicId) {
+            const pct    = el.value;
+            const label  = el.closest('.progress-row')
+                             .querySelector('.prog-pct');
+            if (label) label.textContent = pct + '%';
+
+            // Ring update করো
+            updateRing(topicId, pct);
+        }
+
+        function onSliderChange(el, topicId) {
+            const pct = parseInt(el.value);
+            fetch('/Topic/UpdateProgress', {
+                method:  'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                    'RequestVerificationToken':
+                        document.querySelector(
+                            'input[name="__RequestVerificationToken"]')?.value ?? ''
+                },
+                body: `id=${topicId}&progress=${pct}`
+            })
+            .then(r => r.json())
+            .then(d => {
+                if (d.isCompleted) setTimeout(() => location.reload(), 400);
+            });
+        }
+
+        function updateRing(topicId, pct) {
+            const ring = document.getElementById('ring-' + topicId);
+            if (!ring) return;
+            const circ   = 2 * Math.PI * 18;
+            const offset = circ - (circ * pct / 100);
+            ring.style.strokeDashoffset = offset;
+
+            const txt = document.getElementById('ring-txt-' + topicId);
+            if (txt) txt.textContent = pct + '%';
+        }
+
+        // ── Toggle complete ──
+        function toggleComplete(topicId) {
+            fetch('/Topic/ToggleComplete', {
+                method:  'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                    'RequestVerificationToken':
+                        document.querySelector(
+                            'input[name="__RequestVerificationToken"]')?.value ?? ''
+                },
+                body: `id=${topicId}`
+            })
+            .then(r => r.json())
+            .then(() => location.reload());
+        }
+
+        // ── Inline notes edit ──
+        function editNotes(topicId) {
+            const txt   = document.getElementById('notes-txt-'  + topicId);
+            const inp   = document.getElementById('notes-inp-'  + topicId);
+            txt.style.display = 'none';
+            inp.style.display = 'block';
+            inp.focus();
+        }
+
+        function saveNotes(topicId) {
+            const inp  = document.getElementById('notes-inp-' + topicId);
+            const txt  = document.getElementById('notes-txt-' + topicId);
+            const val  = inp.value.trim();
+
+            fetch('/Topic/UpdateNotes', {
+                method:  'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                    'RequestVerificationToken':
+                        document.querySelector(
+                            'input[name="__RequestVerificationToken"]')?.value ?? ''
+                },
+                body: `id=${topicId}&notes=${encodeURIComponent(val)}`
+            });
+
+            txt.textContent   = val || 'Notes যোগ করো...';
+            txt.style.display = 'block';
+            inp.style.display = 'none';
+        }
+
+        // Animate rings on load
+        document.querySelectorAll('[data-ring-id]').forEach(el => {
+            const id  = el.dataset.ringId;
+            const pct = parseInt(el.dataset.ringPct);
+            setTimeout(() => updateRing(id, pct), 100);
+        });
+    </script>
+}

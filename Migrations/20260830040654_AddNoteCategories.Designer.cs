@@ -4,6 +4,7 @@ using ITSoftware.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,10 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace ITSoftware.Migrations
 {
     [DbContext(typeof(ExamPrepDbContext))]
-    partial class ExamPrepDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260830040654_AddNoteCategories")]
+    partial class AddNoteCategories
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -113,7 +115,7 @@ namespace ITSoftware.Migrations
                         {
                             Id = 1,
                             Category = "GK",
-                            CreatedAt = new DateTime(2026, 8, 31, 0, 19, 26, 828, DateTimeKind.Local).AddTicks(3723),
+                            CreatedAt = new DateTime(2026, 8, 30, 10, 6, 54, 621, DateTimeKind.Local).AddTicks(7302),
                             Progress = 0,
                             Title = "বাংলাদেশের ইতিহাস"
                         },
@@ -121,7 +123,7 @@ namespace ITSoftware.Migrations
                         {
                             Id = 2,
                             Category = "English",
-                            CreatedAt = new DateTime(2026, 8, 31, 0, 19, 26, 828, DateTimeKind.Local).AddTicks(3726),
+                            CreatedAt = new DateTime(2026, 8, 30, 10, 6, 54, 621, DateTimeKind.Local).AddTicks(7304),
                             Progress = 0,
                             Title = "Sentence Correction"
                         },
@@ -129,7 +131,7 @@ namespace ITSoftware.Migrations
                         {
                             Id = 3,
                             Category = "Math",
-                            CreatedAt = new DateTime(2026, 8, 31, 0, 19, 26, 828, DateTimeKind.Local).AddTicks(3727),
+                            CreatedAt = new DateTime(2026, 8, 30, 10, 6, 54, 621, DateTimeKind.Local).AddTicks(7305),
                             Progress = 0,
                             Title = "Aptitude — Percentage"
                         },
@@ -137,7 +139,7 @@ namespace ITSoftware.Migrations
                         {
                             Id = 4,
                             Category = "Viva",
-                            CreatedAt = new DateTime(2026, 8, 31, 0, 19, 26, 828, DateTimeKind.Local).AddTicks(3728),
+                            CreatedAt = new DateTime(2026, 8, 30, 10, 6, 54, 621, DateTimeKind.Local).AddTicks(7305),
                             Progress = 0,
                             Title = "Common HR Questions"
                         });
@@ -188,145 +190,6 @@ namespace ITSoftware.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("Notes");
-                });
-
-            modelBuilder.Entity("ITSoftware.Models.StudyGoal", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"), 1L, 1);
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<int>("DailyMcqTarget")
-                        .HasColumnType("int");
-
-                    b.Property<int>("DailyNotesMinutes")
-                        .HasColumnType("int");
-
-                    b.Property<int>("DailyTopicTarget")
-                        .HasColumnType("int");
-
-                    b.Property<bool>("IsActive")
-                        .HasColumnType("bit");
-
-                    b.Property<DateTime>("UpdatedAt")
-                        .HasColumnType("datetime2");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("StudyGoals");
-
-                    b.HasData(
-                        new
-                        {
-                            Id = 1,
-                            CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            DailyMcqTarget = 20,
-                            DailyNotesMinutes = 30,
-                            DailyTopicTarget = 2,
-                            IsActive = true,
-                            UpdatedAt = new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified)
-                        });
-                });
-
-            modelBuilder.Entity("ITSoftware.Models.StudyLog", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"), 1L, 1);
-
-                    b.Property<int>("ActivityCount")
-                        .HasColumnType("int");
-
-                    b.Property<string>("ActivityType")
-                        .IsRequired()
-                        .HasMaxLength(50)
-                        .HasColumnType("nvarchar(50)");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<string>("Description")
-                        .HasMaxLength(200)
-                        .HasColumnType("nvarchar(200)");
-
-                    b.Property<DateTime>("LogDate")
-                        .HasColumnType("datetime2");
-
-                    b.Property<int?>("ReferenceId")
-                        .HasColumnType("int");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("StudyLogs");
-                });
-
-            modelBuilder.Entity("ITSoftware.Models.StudyPlan", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"), 1L, 1);
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<DateTime>("EndDate")
-                        .HasColumnType("datetime2");
-
-                    b.Property<DateTime>("StartDate")
-                        .HasColumnType("datetime2");
-
-                    b.Property<string>("Title")
-                        .IsRequired()
-                        .HasMaxLength(200)
-                        .HasColumnType("nvarchar(200)");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("StudyPlans");
-                });
-
-            modelBuilder.Entity("ITSoftware.Models.StudyTask", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"), 1L, 1);
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<bool>("IsCompleted")
-                        .HasColumnType("bit");
-
-                    b.Property<int>("SortOrder")
-                        .HasColumnType("int");
-
-                    b.Property<int>("StudyPlanId")
-                        .HasColumnType("int");
-
-                    b.Property<DateTime>("TaskDate")
-                        .HasColumnType("datetime2");
-
-                    b.Property<string>("Title")
-                        .IsRequired()
-                        .HasMaxLength(500)
-                        .HasColumnType("nvarchar(500)");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("StudyPlanId");
-
-                    b.ToTable("StudyTask");
                 });
 
             modelBuilder.Entity("ITSoftware.Models.Syllabus", b =>
@@ -399,7 +262,7 @@ namespace ITSoftware.Migrations
                         {
                             Id = 1,
                             Category = "DSA",
-                            CreatedAt = new DateTime(2026, 8, 31, 0, 19, 26, 828, DateTimeKind.Local).AddTicks(3625),
+                            CreatedAt = new DateTime(2026, 8, 30, 10, 6, 54, 621, DateTimeKind.Local).AddTicks(7221),
                             IsCompleted = false,
                             Progress = 0,
                             Title = "Data Structures & Algorithms"
@@ -408,7 +271,7 @@ namespace ITSoftware.Migrations
                         {
                             Id = 2,
                             Category = "Database",
-                            CreatedAt = new DateTime(2026, 8, 31, 0, 19, 26, 828, DateTimeKind.Local).AddTicks(3635),
+                            CreatedAt = new DateTime(2026, 8, 30, 10, 6, 54, 621, DateTimeKind.Local).AddTicks(7230),
                             IsCompleted = false,
                             Progress = 0,
                             Title = "Database Management"
@@ -417,7 +280,7 @@ namespace ITSoftware.Migrations
                         {
                             Id = 3,
                             Category = "Network",
-                            CreatedAt = new DateTime(2026, 8, 31, 0, 19, 26, 828, DateTimeKind.Local).AddTicks(3635),
+                            CreatedAt = new DateTime(2026, 8, 30, 10, 6, 54, 621, DateTimeKind.Local).AddTicks(7231),
                             IsCompleted = false,
                             Progress = 0,
                             Title = "Networking"
@@ -426,7 +289,7 @@ namespace ITSoftware.Migrations
                         {
                             Id = 4,
                             Category = "OOP",
-                            CreatedAt = new DateTime(2026, 8, 31, 0, 19, 26, 828, DateTimeKind.Local).AddTicks(3636),
+                            CreatedAt = new DateTime(2026, 8, 30, 10, 6, 54, 621, DateTimeKind.Local).AddTicks(7231),
                             IsCompleted = false,
                             Progress = 0,
                             Title = "OOP Concepts"
@@ -435,27 +298,11 @@ namespace ITSoftware.Migrations
                         {
                             Id = 5,
                             Category = "OS",
-                            CreatedAt = new DateTime(2026, 8, 31, 0, 19, 26, 828, DateTimeKind.Local).AddTicks(3637),
+                            CreatedAt = new DateTime(2026, 8, 30, 10, 6, 54, 621, DateTimeKind.Local).AddTicks(7232),
                             IsCompleted = false,
                             Progress = 0,
                             Title = "Operating Systems"
                         });
-                });
-
-            modelBuilder.Entity("ITSoftware.Models.StudyTask", b =>
-                {
-                    b.HasOne("ITSoftware.Models.StudyPlan", "StudyPlan")
-                        .WithMany("Tasks")
-                        .HasForeignKey("StudyPlanId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("StudyPlan");
-                });
-
-            modelBuilder.Entity("ITSoftware.Models.StudyPlan", b =>
-                {
-                    b.Navigation("Tasks");
                 });
 #pragma warning restore 612, 618
         }

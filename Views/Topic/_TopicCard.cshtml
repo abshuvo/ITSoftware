@@ -1,0 +1,143 @@
+﻿@model ITSoftware.Models.Topic
+@{
+    var returnCat = ViewData["ReturnCat"] as string;
+    var circ = 2 * Math.PI * 18;
+    var offset = circ - (circ * Model.Progress / 100);
+
+    string ringColor = Model.IsCompleted ? "#1D9E75"
+                     : Model.Progress > 0 ? "#BA7517"
+                     : "#AFA9EC";
+
+    string catColor = (Model.Category ?? "").ToLower() switch
+    {
+        "dsa" or "data structure" => "#534AB7",
+        "dbms" or "database" => "#1D9E75",
+        "os" or "operating" => "#BA7517",
+        "network" or "networking" => "#185FA5",
+        "oop" => "#993556",
+        "system design" => "#993C1D",
+        "algorithm" => "#085041",
+        _ => "#534AB7"
+    };
+
+    string catBg = (Model.Category ?? "").ToLower() switch
+    {
+        "dsa" or "data structure" => "#EEEDFE",
+        "dbms" or "database" => "#E1F5EE",
+        "os" or "operating" => "#FAEEDA",
+        "network" or "networking" => "#E6F1FB",
+        "oop" => "#FBEAF0",
+        "system design" => "#FAECE7",
+        "algorithm" => "#E1F5EE",
+        _ => "#EEEDFE"
+    };
+}
+
+<div class="topic-card @(Model.IsCompleted ? "is-done" : "")"
+     data-ring-id="@Model.Id"
+     data-ring-pct="@Model.Progress">
+
+    @if (Model.IsCompleted)
+    {
+        <div class="done-mark">
+            <i class="bi bi-check2"></i>
+        </div>
+    }
+
+    <div class="card-top">
+        @* Progress ring *@
+        <div class="ring-wrap">
+            <svg class="ring-svg" width="44" height="44" viewBox="0 0 44 44">
+                <circle class="ring-track" cx="22" cy="22" r="18" />
+                <circle class="ring-prog"
+                        cx="22" cy="22" r="18"
+                        stroke="@ringColor"
+                        stroke-dasharray="@circ.ToString("F1")"
+                        stroke-dashoffset="@circ.ToString("F1")"
+                        id="ring-@Model.Id" />
+            </svg>
+            <div class="ring-center-text"
+                 id="ring-txt-@Model.Id">
+                @Model.Progress%
+            </div>
+        </div>
+
+        <div class="card-info">
+            <div class="card-title @(Model.IsCompleted ? "done-title" : "")">
+                @Model.Title
+            </div>
+            @if (!string.IsNullOrEmpty(Model.Category))
+            {
+                <span class="cat-chip"
+                      style="background:@catBg;color:@catColor;">
+                    @Model.Category
+                </span>
+            }
+        </div>
+    </div>
+
+    @* Progress slider *@
+    @if (!Model.IsCompleted)
+    {
+        <div class="progress-row">
+            <div class="prog-label">
+                <span>অগ্রগতি</span>
+                <span class="prog-pct">@Model.Progress%</span>
+            </div>
+            <input type="range"
+                   class="prog-slider"
+                   min="0" max="100" step="5"
+                   value="@Model.Progress"
+                   style="accent-color:@ringColor;"
+                   oninput="onSliderInput(this, @Model.Id)"
+                   onchange="onSliderChange(this, @Model.Id)" />
+        </div>
+    }
+
+    @* Notes *@
+    <div class="notes-row">
+        <div class="notes-text"
+             id="notes-txt-@Model.Id"
+             onclick="editNotes(@Model.Id)">
+            @(string.IsNullOrEmpty(Model.Notes)
+                        ? "Notes যোগ করো..."
+                        : Model.Notes)
+        </div>
+        <textarea class="notes-input"
+                  id="notes-inp-@Model.Id"
+                  rows="2"
+                  placeholder="Notes লিখো..."
+                  onblur="saveNotes(@Model.Id)">@Model.Notes</textarea>
+    </div>
+
+    @* Actions *@
+    <div class="card-actions">
+        @if (!Model.IsCompleted)
+        {
+            <button class="ca-btn done-btn"
+                    onclick="toggleComplete(@Model.Id)">
+                <i class="bi bi-check2"></i> সম্পন্ন করো
+            </button>
+        }
+        else
+        {
+            <button class="ca-btn undone-btn"
+                    onclick="toggleComplete(@Model.Id)">
+                <i class="bi bi-arrow-counterclockwise"></i> Undo
+            </button>
+        }
+
+        <form asp-action="Delete" asp-controller="Topic"
+              method="post"
+              onsubmit="return confirm('Delete করবে?')"
+              style="margin:0;margin-left:auto;">
+            @Html.AntiForgeryToken()
+            <input type="hidden" name="id" value="@Model.Id" />
+            <input type="hidden" name="returnCategory"
+                   value="@returnCat" />
+            <button type="submit" class="ca-btn ca-del">
+                <i class="bi bi-trash"></i>
+            </button>
+        </form>
+    </div>
+</div>

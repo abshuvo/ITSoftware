@@ -15,8 +15,12 @@ namespace ITSoftware.Data
         public DbSet<McqQuestion> McqQuestions { get; set; }
         public DbSet<Note> Notes { get; set; }
         public DbSet<NonTechTopic> NonTechTopics { get; set; }
+
         public DbSet<StudyGoal> StudyGoals { get; set; }
         public DbSet<StudyLog> StudyLogs { get; set; }
+
+        public DbSet<StudyPlan> StudyPlans { get; set; }
+
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);

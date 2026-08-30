@@ -420,6 +420,55 @@
             font-weight: 700;
             margin-bottom: 16px;
         }
+
+
+        media (max-width: 900px) {
+            .notes-layout
+
+        {
+            grid-template-columns: 1fr;
+        }
+
+        .cat-sidebar {
+            display: none;
+        }
+
+        }
+
+        media (max-width: 768px) {
+            /* File grid — single column */
+            .file-grid
+
+        {
+            grid-template-columns: 1fr;
+        }
+
+        /* Upload form stack */
+        .row.g-2 .col-6 {
+            flex: 0 0 100%;
+            max-width: 100%;
+        }
+
+        /* Search bar stack */
+        .search-bar {
+            flex-wrap: wrap;
+        }
+
+            .search-bar input {
+                min-width: 0;
+            }
+
+        /* File card actions wrap */
+        .file-actions {
+            flex-wrap: wrap;
+        }
+
+        /* Drop zone padding কমাও */
+        .drop-zone {
+            padding: 16px;
+        }
+
+        }
     </style>
 }
 
@@ -428,7 +477,7 @@
 {
     <div class="alert mb-3"
          style="background:#E1F5EE;border:1px solid #5DCAA5;
-                border-radius:10px;color:#085041;font-size:13px;">
+                    border-radius:10px;color:#085041;font-size:13px;">
         <i class="bi bi-check-circle-fill me-1"></i>
         @TempData["Success"]
     </div>
@@ -437,7 +486,7 @@
 {
     <div class="alert mb-3"
          style="background:#FAECE7;border:1px solid #F0997B;
-                border-radius:10px;color:#712B13;font-size:13px;">
+                    border-radius:10px;color:#712B13;font-size:13px;">
         <i class="bi bi-exclamation-circle-fill me-1"></i>
         @TempData["Error"]
     </div>
@@ -469,7 +518,7 @@
             var isActive = Model.ActiveCategory == cat ? "active" : "";
 
             <a asp-action="Index" asp-controller="Note"
-           asp-route-category="@cat"
+               asp-route-category="@cat"
                class="cat-item @isActive">
                 <i class="bi @catIcon cat-icon"></i>
                 @cat
@@ -482,12 +531,37 @@
             <div style="padding:10px 16px;border-top:1px solid #f0f0ee;margin-top:4px;">
                 <button onclick="showRenameModal()"
                         style="font-size:11px;color:#888;background:none;
-                               border:none;cursor:pointer;padding:0;">
+                                   border:none;cursor:pointer;padding:0;">
                     <i class="bi bi-pencil me-1"></i>Category rename করো
                 </button>
             </div>
         }
     </aside>
+     
+    <!-- Mobile category pills -->
+    <div style="display:none;flex-wrap:wrap;gap:6px;
+            margin-bottom:14px;" id="mob-note-cats">
+        <a asp-action="Index" asp-controller="Note"
+           style="font-size:12px;padding:5px 12px;border-radius:20px;
+              text-decoration:none;border:1px solid;
+              @(Model.ActiveCategory == null
+                             ? "background:var(--primary);color:#fff;border-color:var(--primary);"
+                             : "background:#fff;color:#555;border-color:#e8e7e2;")">
+            সব
+        </a>
+        @foreach (var cat in Model.Categories)
+        {
+            <a asp-action="Index" asp-controller="Note"
+               asp-route-category="@cat"
+               style="font-size:12px;padding:5px 12px;border-radius:20px;
+                      text-decoration:none;border:1px solid;
+                      @(Model.ActiveCategory == cat
+                                     ? "background:var(--primary);color:#fff;border-color:var(--primary);"
+                                     : "background:#fff;color:#555;border-color:#e8e7e2;")">
+            @cat
+        </a>
+                }
+    </div>
 
     @* ══ RIGHT — Main content ══ *@
     <div>
@@ -506,7 +580,7 @@
                 <form asp-action="Upload" asp-controller="Note"
                       method="post" enctype="multipart/form-data"
                       id="noteUploadForm">
-                    @Html.AntiForgeryToken()
+                    Html.AntiForgeryToken()
 
                     <div class="drop-zone" id="noteDropZone"
                          onclick="document.getElementById('noteFile').click()">
@@ -599,16 +673,16 @@
                             </div>
                             <div style="display:flex;flex-wrap:wrap;gap:5px;">
                                 @foreach (var quick in new[]
-                                { "DBMS","OS","DSA","Network","OOP",
-                                "System Design","Algorithm","Math" })
+                                                                { "DBMS","OS","DSA","Network","OOP",
+                                                                "System Design","Algorithm","Math" })
                                 {
                                     <button type="button"
                                             onclick="setCat('@quick')"
                                             style="font-size:11px;padding:3px 10px;
-                                                   border-radius:6px;
-                                                   border:1px solid #e8e7e2;
-                                                   background:#f5f5f3;
-                                                   color:#555;cursor:pointer;">
+                                                       border-radius:6px;
+                                                       border:1px solid #e8e7e2;
+                                                       background:#f5f5f3;
+                                                       color:#555;cursor:pointer;">
                                         @quick
                                     </button>
                                 }
@@ -646,10 +720,10 @@
             @if (!string.IsNullOrEmpty(Model.SearchQuery))
             {
                 <a asp-action="Index"
-               asp-route-category="@Model.ActiveCategory"
+                   asp-route-category="@Model.ActiveCategory"
                    style="padding:8px 12px;border-radius:8px;
-                          border:1px solid #e8e7e2;background:#fff;
-                          color:#555;font-size:13px;text-decoration:none;">
+                              border:1px solid #e8e7e2;background:#fff;
+                              color:#555;font-size:13px;text-decoration:none;">
                     <i class="bi bi-x"></i>
                 </a>
             }
@@ -737,7 +811,7 @@
                                         @if (!string.IsNullOrEmpty(note.Description))
                                         {
                                             <div style="font-size:11px;color:#888;
-                                                        margin-top:3px;line-height:1.4;">
+                                                                        margin-top:3px;line-height:1.4;">
                                                 @note.Description
                                             </div>
                                         }
@@ -755,17 +829,33 @@
                                 </div>
 
                                 <div class="file-actions">
-                                    <a href="@note.FilePath" target="_blank"
-                                       class="act-btn act-view">
-                                        <i class="bi bi-eye"></i> দেখো
-                                    </a>
-                                    <a href="@note.FilePath"
-                                       download="@note.FileName"
+                                    @* PDF এবং Image — নতুন tab এ দেখাবে *@
+                                    @if (note.FileType == "pdf" || note.FileType == "image")
+                                    {
+                                        <a asp-action="Preview"
+                                           asp-controller="Note"
+                                           asp-route-id="@note.Id"
+                                           target="_blank"
+                                           class="act-btn act-view">
+                                            <i class="bi bi-eye"></i> দেখো
+                                        </a>
+                                    }
+                                    @* DOCX — Google Docs Viewer এ দেখাবে *@
+                                    else if (note.FileType == "doc")
+                                    {
+                                        <button type="button" onclick="previewDocx(@note.Id, '@note.FilePath')" class="act-btn act-view">
+                                        </button>
+                                    }
+
+                                    @* Download সবার জন্য *@
+                                    <a asp-action="Download"
+                                       asp-controller="Note"
+                                       asp-route-id="@note.Id"
                                        class="act-btn act-download">
                                         <i class="bi bi-download"></i> Download
                                     </a>
                                     <form asp-action="Delete"
-                              asp-controller="Note"
+                                          asp-controller="Note"
                                           method="post"
                                           onsubmit="return confirm('এই note টি delete করবে?')"
                                           style="margin:0;">
@@ -843,17 +933,102 @@
     </div>
 </div>
 
+@* ══ DOCX Preview Modal ══ *@
+<div class="modal-overlay" id="docxModal">
+    <div class="modal-box"
+         style="width:90vw;max-width:900px;height:85vh;
+                padding:0;display:flex;flex-direction:column;">
+
+        @* Header *@
+        <div style="padding:14px 18px;border-bottom:1px solid #f0f0ee;
+                    display:flex;align-items:center;
+                    justify-content:space-between;flex-shrink:0;">
+            <div style="font-size:14px;font-weight:600;">
+                <i class="bi bi-file-earmark-word me-1"
+                   style="color:#185FA5;"></i>
+                <span id="docxModalTitle">Document Preview</span>
+            </div>
+            <div style="display:flex;gap:8px;align-items:center;">
+                <a id="docxDownloadBtn"
+                   style="font-size:12px;padding:5px 12px;border-radius:6px;
+                          background:#E6F1FB;color:#185FA5;
+                          border:1px solid #85B7EB;text-decoration:none;">
+                    <i class="bi bi-download me-1"></i>Download
+                </a>
+                <button onclick="closeDocxModal()"
+                        style="background:none;border:none;
+                               font-size:20px;color:#888;cursor:pointer;
+                               line-height:1;">
+                    <i class="bi bi-x-lg"></i>
+                </button>
+            </div>
+        </div>
+
+        @* Loading state *@
+        <div id="docxLoading"
+             style="flex:1;display:flex;flex-direction:column;
+                    align-items:center;justify-content:center;
+                    color:#aaa;gap:12px;">
+            <div class="spinner-border"
+                 style="color:var(--primary);width:2rem;height:2rem;"
+                 role="status"></div>
+            <span style="font-size:13px;">Document load হচ্ছে...</span>
+        </div>
+
+        @* iframe — Google Docs Viewer *@
+        <iframe id="docxFrame"
+                style="flex:1;border:none;display:none;"
+                allowfullscreen
+                onload="docxFrameLoaded()">
+        </iframe>
+
+        @* Fallback — Google Docs Viewer কাজ না করলে *@
+        <div id="docxFallback"
+             style="flex:1;display:none;flex-direction:column;
+                    align-items:center;justify-content:center;
+                    padding:30px;text-align:center;color:#888;">
+            <i class="bi bi-exclamation-circle"
+               style="font-size:40px;color:#BA7517;display:block;
+                      margin-bottom:12px;"></i>
+            <p style="font-size:14px;font-weight:600;color:#555;
+                      margin-bottom:6px;">
+                Browser এ preview সম্ভব হয়নি
+            </p>
+            <p style="font-size:13px;margin-bottom:16px;">
+                Google Docs Viewer এ দেখতে পারো অথবা file টি download করো।
+            </p>
+            <div style="display:flex;gap:10px;justify-content:center;">
+                <a id="fallbackGoogleBtn" target="_blank"
+                   style="padding:9px 18px;border-radius:8px;
+                          background:#4285F4;color:#fff;
+                          text-decoration:none;font-size:13px;
+                          font-weight:600;">
+                    <i class="bi bi-google me-1"></i>
+                    Google Docs এ খোলো
+                </a>
+                <a id="fallbackDownloadBtn"
+                   style="padding:9px 18px;border-radius:8px;
+                          background:#f5f5f3;color:#555;
+                          border:1px solid #e8e7e2;
+                          text-decoration:none;font-size:13px;">
+                    <i class="bi bi-download me-1"></i>Download
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
 @section Scripts {
     <script>
         setSidebarProgress(0);
 
         let uploadOpen = true;
         function toggleUpload() {
-            const body = document.getElementById('upload-body');
+            const body    = document.getElementById('upload-body');
             const chevron = document.getElementById('upload-chevron');
-            uploadOpen = !uploadOpen;
+            uploadOpen    = !uploadOpen;
             body.style.display = uploadOpen ? 'block' : 'none';
-            chevron.className = uploadOpen
+            chevron.className  = uploadOpen
                 ? 'bi bi-chevron-up'
                 : 'bi bi-chevron-down';
         }
@@ -861,15 +1036,15 @@
         function noteFileSelected(input) {
             const el = document.getElementById('noteFileName');
             if (input.files.length > 0) {
-                el.textContent = '✓ ' + input.files[0].name;
+                el.textContent   = '✓ ' + input.files[0].name;
                 el.style.display = 'block';
             }
         }
 
-        const zone = document.getElementById('noteDropZone');
-        const inp = document.getElementById('noteFile');
+        const zone  = document.getElementById('noteDropZone');
+        const inp   = document.getElementById('noteFile');
 
-        zone.addEventListener('dragover', e => {
+        zone.addEventListener('dragover',  e => {
             e.preventDefault();
             zone.classList.add('over');
         });
@@ -891,9 +1066,9 @@
 
         document.getElementById('noteUploadForm')
             .addEventListener('submit', function () {
-                const btn = document.getElementById('uploadBtn');
+                const btn     = document.getElementById('uploadBtn');
                 btn.innerHTML = '<i class="bi bi-hourglass-split me-1"></i>Uploading...';
-                btn.disabled = true;
+                btn.disabled  = true;
             });
 
         function showRenameModal() {
@@ -905,5 +1080,99 @@
         document.getElementById('renameModal').addEventListener('click', function (e) {
             if (e.target === this) hideRenameModal();
         });
+                // Mobile এ category pills দেখাও
+        if (window.innerWidth <= 900) {
+            document.getElementById('mob-note-cats').style.display = 'flex';
+        }
+        window.addEventListener('resize', () => {
+            const el = document.getElementById('mob-note-cats');
+            if (el) el.style.display = window.innerWidth <= 900 ? 'flex' : 'none';
+        });
+
+                // ── DOCX Preview Modal ──
+        let docxLoadTimer = null;
+
+                function previewDocx(noteId, filePath) {
+            const modal    = document.getElementById('docxModal');
+            const frame    = document.getElementById('docxFrame');
+            const loading  = document.getElementById('docxLoading');
+            const fallback = document.getElementById('docxFallback');
+            const dlBtn    = document.getElementById('docxDownloadBtn');
+            const fbGoogle = document.getElementById('fallbackGoogleBtn');
+            const fbDl     = document.getElementById('fallbackDownloadBtn');
+
+            // Reset state
+            frame.style.display    = 'none';
+            loading.style.display  = 'flex';
+            fallback.style.display = 'none';
+            frame.src              = '';
+
+            const downloadUrl = `/Note/Download/${noteId}`;
+            dlBtn.href   = downloadUrl;
+            fbDl.href    = downloadUrl;
+
+            modal.classList.add('show');
+            document.body.style.overflow = 'hidden';
+
+            // 🟢 Fix: ফাইলের ডিরেক্ট URL তৈরি করা
+            const filePublicUrl = `${window.location.origin}${filePath}`;
+
+            // Microsoft Office Viewer URL
+            const officeUrl = `https://view.officeapps.live.com/op/embed.aspx?src=${encodeURIComponent(filePublicUrl)}`;
+
+            fbGoogle.href = officeUrl;
+            frame.src     = officeUrl;
+
+            docxLoadTimer = setTimeout(() => {
+                if (frame.style.display === 'none') {
+                    loading.style.display  = 'none';
+                    fallback.style.display = 'flex';
+                }
+            }, 15000);
+        }
+
+        function docxFrameLoaded() {
+            clearTimeout(docxLoadTimer);
+            const frame   = document.getElementById('docxFrame');
+            const loading = document.getElementById('docxLoading');
+
+            try {
+                // iframe content check — cross-origin error হলে fallback
+                const doc = frame.contentDocument || frame.contentWindow?.document;
+                if (!doc || doc.body?.innerHTML === '') throw new Error('empty');
+
+                loading.style.display = 'none';
+                frame.style.display   = 'block';
+            } catch {
+                // Google Docs Viewer cross-origin — সরাসরি দেখাও
+                loading.style.display = 'none';
+                frame.style.display   = 'block';
+            }
+        }
+
+        function closeDocxModal() {
+            clearTimeout(docxLoadTimer);
+            const modal = document.getElementById('docxModal');
+            const frame = document.getElementById('docxFrame');
+
+            modal.classList.remove('show');
+            document.body.style.overflow = '';
+            // iframe src clear করো — memory leak এড়াতে
+            setTimeout(() => { frame.src = ''; }, 300);
+        }
+
+        // Modal এর বাইরে click করলে বন্ধ হবে
+        document.getElementById('docxModal').addEventListener('click', function(e) {
+            if (e.target === this) closeDocxModal();
+        });
+
+        // Escape key দিলে বন্ধ হবে
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                closeDocxModal();
+                hideRenameModal();
+            }
+        });
+
     </script>
 }

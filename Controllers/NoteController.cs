@@ -71,7 +71,12 @@ namespace ITSoftware.Controllers
         // ══════════════════════════════════════
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Upload( string title, string category, string? subCategory,string? description, IFormFile file)
+            public async Task<IActionResult> Upload(
+            string title,
+            string category,
+            string? subCategory,
+            string? description,
+            IFormFile file)
         {
             if (file == null || file.Length == 0)
             {
@@ -192,9 +197,80 @@ namespace ITSoftware.Controllers
         private static string SanitizeFolderName(string name)
         {
             var invalid = Path.GetInvalidFileNameChars();
-            return string.Concat(name.Trim()
+            return string.Concat(name.Trim() 
                 .Select(c => invalid.Contains(c) ? '_' : c))
                 .Replace(' ', '_');
+        }
+
+
+        // ══════════════════════════════════════
+        //  Preview — file type অনুযায়ী দেখাবে
+        // ══════════════════════════════════════
+        public async Task<IActionResult> Preview(int id)
+        {
+            var note = await _context.Notes.FindAsync(id);
+            if (note == null || string.IsNullOrEmpty(note.FilePath)) return NotFound();
+
+            var fullPath = Path.Combine(
+                _env.WebRootPath,
+                note.FilePath.TrimStart('/').Replace('/', Path.DirectorySeparatorChar));
+
+            if (!System.IO.File.Exists(fullPath)) return NotFound();
+
+            var ext = Path.GetExtension(note.FileName ?? "").ToLowerInvariant();
+            var contentType = ext switch
+            {
+                ".pdf" => "application/pdf",
+                ".jpg" or ".jpeg" => "image/jpeg",
+                ".png" => "image/png",
+                ".doc" => "application/msword",
+                ".docx" => "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+                _ => "application/octet-stream"
+            };
+
+            // 🟢 Fix: ContentDisposition অবজেক্ট ব্যবহার করে ব্রাউজারকে inline ভিউ করার নির্দেশ দেওয়া
+            var cd = new System.Net.Mime.ContentDisposition
+            {
+                FileName = note.FileName,
+                Inline = true
+            };
+            Response.Headers.Append("Content-Disposition", cd.ToString());
+
+            var bytes = await System.IO.File.ReadAllBytesAsync(fullPath);
+            return File(bytes, contentType);
+        }
+
+        // ══════════════════════════════════════
+        //  Download — force download
+        // ══════════════════════════════════════
+        public async Task<IActionResult> Download(int id)
+        {
+            var note = await _context.Notes.FindAsync(id);
+            if (note == null) return NotFound();
+
+            if (string.IsNullOrEmpty(note.FilePath))
+                return NotFound();
+
+            var fullPath = Path.Combine(
+                _env.WebRootPath,
+                note.FilePath.TrimStart('/').Replace('/', Path.DirectorySeparatorChar));
+
+            if (!System.IO.File.Exists(fullPath))
+                return NotFound();
+
+            var ext = Path.GetExtension(note.FileName ?? "").ToLowerInvariant();
+            var contentType = ext switch
+            {
+                ".pdf" => "application/pdf",
+                ".doc" => "application/msword",
+                ".docx" => "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+                ".jpg" or ".jpeg" => "image/jpeg",
+                ".png" => "image/png",
+                _ => "application/octet-stream"
+            };
+
+            var bytes = await System.IO.File.ReadAllBytesAsync(fullPath);
+            return File(bytes, contentType, note.FileName);
         }
     }
 }

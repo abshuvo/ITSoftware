@@ -1,0 +1,265 @@
+﻿@model ITSoftware.Models.ViewModels.StudyPlanViewModel
+@{
+    ViewData["Title"] = "Study Planner";
+    ViewData["Subtitle"] = "Study Plan";
+}
+
+@section Styles {
+    <style>
+        .planner-index {
+            max-width: 680px;
+        }
+
+        .create-panel {
+            background: #fff;
+            border: 1px solid #e8e7e2;
+            border-radius: 12px;
+            overflow: hidden;
+            margin-bottom: 20px;
+        }
+
+        .create-panel-header {
+            padding: 13px 16px;
+            border-bottom: 1px solid #f0f0ee;
+            font-size: 13px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .create-body {
+            padding: 16px;
+        }
+
+        .plan-list {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .plan-card {
+            background: #fff;
+            border: 1px solid #e8e7e2;
+            border-radius: 12px;
+            padding: 14px 16px;
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            transition: box-shadow .15s;
+        }
+
+            .plan-card:hover {
+                box-shadow: 0 4px 12px rgba(0,0,0,.06);
+            }
+
+        .plan-icon {
+            width: 42px;
+            height: 42px;
+            border-radius: 10px;
+            background: var(--primary-lt);
+            color: var(--primary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            flex-shrink: 0;
+        }
+
+        .plan-info {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .plan-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: #1a1a1a;
+        }
+
+        .plan-meta {
+            font-size: 11px;
+            color: #aaa;
+            margin-top: 3px;
+        }
+
+        .plan-actions {
+            display: flex;
+            gap: 6px;
+        }
+
+        .btn-sm {
+            font-size: 12px;
+            padding: 6px 12px;
+            border-radius: 8px;
+            border: 1px solid;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            background: #fff;
+        }
+
+        .btn-view {
+            color: var(--primary);
+            border-color: var(--primary-md);
+        }
+
+            .btn-view:hover {
+                background: var(--primary-lt);
+                color: var(--primary);
+            }
+
+        .btn-del {
+            color: #993C1D;
+            border-color: #F0997B;
+        }
+
+            .btn-del:hover {
+                background: #FAECE7;
+            }
+
+        .empty-plans {
+            text-align: center;
+            padding: 40px 20px;
+            color: #aaa;
+            font-size: 13px;
+        }
+
+            .empty-plans i {
+                font-size: 40px;
+                display: block;
+                margin-bottom: 10px;
+            }
+    </style>
+}
+
+@* ── Alerts ── *@
+@if (TempData["Success"] != null)
+{
+    <div class="alert mb-3"
+         style="background:#E1F5EE;border:1px solid #5DCAA5;
+                    border-radius:10px;color:#085041;font-size:13px;padding:10px 14px;">
+        <i class="bi bi-check-circle-fill me-1"></i>@TempData["Success"]
+    </div>
+}
+@if (TempData["Error"] != null)
+{
+    <div class="alert mb-3"
+         style="background:#FAECE7;border:1px solid #F0997B;
+                    border-radius:10px;color:#712B13;font-size:13px;padding:10px 14px;">
+        <i class="bi bi-exclamation-circle-fill me-1"></i>@TempData["Error"]
+    </div>
+}
+
+<div class="planner-index">
+
+    @* ── নতুন Plan তৈরি ── *@
+    <div class="create-panel">
+        <div class="create-panel-header">
+            <i class="bi bi-calendar-plus" style="color:var(--primary);"></i>
+            নতুন Study Plan তৈরি করো
+        </div>
+        <div class="create-body">
+            <form asp-action="Create" asp-controller="StudyPlan" method="post">
+                @Html.AntiForgeryToken()
+                <div class="row g-2">
+                    <div class="col-12">
+                        <label style="font-size:12px;font-weight:600;color:#555;
+                                      margin-bottom:3px;display:block;">
+                            Plan এর নাম <span style="color:red">*</span>
+                        </label>
+                        <input type="text" name="planTitle" required
+                               placeholder="যেমন: Final Exam Preparation"
+                               class="form-control form-control-sm"
+                               style="border-radius:8px;font-size:13px;" />
+                    </div>
+                    <div class="col-6">
+                        <label style="font-size:12px;font-weight:600;color:#555;
+                                      margin-bottom:3px;display:block;">
+                            শুরুর তারিখ <span style="color:red">*</span>
+                        </label>
+                        <input type="date" name="startDate" required
+                               value="@DateTime.Today.ToString("yyyy-MM-dd")"
+                               class="form-control form-control-sm"
+                               style="border-radius:8px;font-size:13px;" />
+                    </div>
+                    <div class="col-6">
+                        <label style="font-size:12px;font-weight:600;color:#555;
+                                      margin-bottom:3px;display:block;">
+                            শেষের তারিখ <span style="color:red">*</span>
+                        </label>
+                        <input type="date" name="endDate" required
+                               value="@DateTime.Today.AddDays(6).ToString("yyyy-MM-dd")"
+                               class="form-control form-control-sm"
+                               style="border-radius:8px;font-size:13px;" />
+                    </div>
+                    <div class="col-12">
+                        <button type="submit"
+                                style="width:100%;padding:9px;border-radius:8px;
+                                       background:var(--primary);color:#fff;border:none;
+                                       font-size:13px;font-weight:600;cursor:pointer;">
+                            <i class="bi bi-plus-circle me-1"></i>Plan তৈরি করো
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    @* ── Plan List ── *@
+    <div style="font-size:12px;font-weight:700;color:#888;
+                text-transform:uppercase;letter-spacing:.06em;
+                margin-bottom:10px;">
+        আমার Plans (@Model.AllPlans.Count টি)
+    </div>
+
+    @if (!Model.AllPlans.Any())
+    {
+        <div class="empty-plans">
+            <i class="bi bi-calendar-x"></i>
+            <p>এখনো কোনো plan তৈরি হয়নি।</p>
+        </div>
+    }
+    else
+    {
+        <div class="plan-list">
+            @foreach (var plan in Model.AllPlans)
+            {
+                var totalDays = (int)(plan.EndDate - plan.StartDate).TotalDays + 1;
+                <div class="plan-card">
+                    <div class="plan-icon">
+                        <i class="bi bi-calendar3"></i>
+                    </div>
+                    <div class="plan-info">
+                        <div class="plan-title">@plan.Title</div>
+                        <div class="plan-meta">
+                            @plan.StartDate.ToString("dd MMM yyyy")
+                            &rarr;
+                            @plan.EndDate.ToString("dd MMM yyyy")
+                            &bull; @totalDays দিন
+                        </div>
+                    </div>
+                    <div class="plan-actions">
+                        <a asp-action="Detail" asp-controller="StudyPlan"
+                           asp-route-id="@plan.Id"
+                           class="btn-sm btn-view">
+                            <i class="bi bi-eye"></i> দেখো
+                        </a>
+                        <form asp-action="DeletePlan" asp-controller="StudyPlan"
+                              method="post" style="margin:0;"
+                              onsubmit="return confirm('এই plan সম্পূর্ণ delete হয়ে যাবে। নিশ্চিত?')">
+                            @Html.AntiForgeryToken()
+                            <input type="hidden" name="id" value="@plan.Id" />
+                            <button type="submit" class="btn-sm btn-del">
+                                <i class="bi bi-trash"></i>
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+
+</div>
