@@ -1,0 +1,909 @@
+﻿@model ITSoftware.Models.ViewModels.NoteIndexViewModel
+@{
+    ViewData["Title"] = "Written Notes";
+    ViewData["Subtitle"] = "Category অনুযায়ী সাজানো নোটস";
+
+    var allGrouped = Model.AllNotes
+        .GroupBy(n => n.Category)
+        .ToDictionary(g => g.Key, g => g.Count());
+
+    // Helper functions — view এর top এ define করা হলো
+    string GetCategoryIcon(string cat) => cat.ToLower() switch
+    {
+        "dbms" or "database" => "bi-database",
+        "os" or "operating" => "bi-pc-display",
+        "dsa" or "data structure" => "bi-diagram-3",
+        "network" or "networking" => "bi-wifi",
+        "oop" => "bi-boxes",
+        "system design" => "bi-layers",
+        "algorithm" => "bi-sort-alpha-down",
+        "math" or "mathematics" => "bi-calculator",
+        _ => "bi-folder2"
+    };
+
+    string GetBadgeClass(string? fileType) => fileType switch
+    {
+        "pdf" => "badge-pdf",
+        "doc" => "badge-doc",
+        "image" => "badge-image",
+        _ => "badge-doc"
+    };
+
+    string GetIconClass(string? fileType) => fileType switch
+    {
+        "pdf" => "bi-filetype-pdf",
+        "doc" => "bi-filetype-docx",
+        "image" => "bi-image",
+        _ => "bi-file"
+    };
+
+    string GetSizeStr(long size)
+    {
+        if (size < 1024) return $"{size} B";
+        if (size < 1024 * 1024) return $"{size / 1024} KB";
+        return $"{size / 1024 / 1024} MB";
+    }
+}
+
+@section Styles {
+    <style>
+        .notes-layout {
+            display: grid;
+            grid-template-columns: 260px 1fr;
+            gap: 20px;
+            align-items: start;
+        }
+
+        @@media (max-width: 900px) {
+            .notes-layout {
+                grid-template-columns: 1fr;
+            }
+
+            .cat-sidebar {
+                display: none;
+            }
+        }
+
+        .cat-sidebar {
+            background: #fff;
+            border: 1px solid #e8e7e2;
+            border-radius: 12px;
+            overflow: hidden;
+            position: sticky;
+            top: 80px;
+        }
+
+        .cat-sidebar-header {
+            padding: 14px 16px;
+            border-bottom: 1px solid #f0f0ee;
+            font-size: 12px;
+            font-weight: 700;
+            color: #888;
+            letter-spacing: .06em;
+            text-transform: uppercase;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .cat-item {
+            display: flex;
+            align-items: center;
+            padding: 10px 16px;
+            font-size: 13px;
+            color: #555;
+            text-decoration: none;
+            border-left: 3px solid transparent;
+            transition: all .15s;
+            gap: 8px;
+        }
+
+            .cat-item:hover {
+                background: #f5f5f3;
+                color: #1a1a1a;
+            }
+
+            .cat-item.active {
+                background: var(--primary-lt);
+                color: var(--primary);
+                border-left-color: var(--primary);
+                font-weight: 600;
+            }
+
+        .cat-count {
+            margin-left: auto;
+            font-size: 11px;
+            background: #f0f0ee;
+            color: #888;
+            padding: 2px 7px;
+            border-radius: 10px;
+        }
+
+        .cat-item.active .cat-count {
+            background: var(--primary-md);
+            color: var(--primary);
+        }
+
+        .cat-icon {
+            font-size: 15px;
+            width: 18px;
+            text-align: center;
+        }
+
+        .upload-panel {
+            background: #fff;
+            border: 1px solid #e8e7e2;
+            border-radius: 12px;
+            overflow: hidden;
+            margin-bottom: 16px;
+        }
+
+        .upload-panel-header {
+            padding: 13px 16px;
+            border-bottom: 1px solid #f0f0ee;
+            font-size: 13px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            cursor: pointer;
+            user-select: none;
+        }
+
+            .upload-panel-header:hover {
+                background: #fafaf8;
+            }
+
+        .upload-body {
+            padding: 16px;
+        }
+
+        .drop-zone {
+            border: 2px dashed #d0cfe8;
+            border-radius: 10px;
+            padding: 22px;
+            text-align: center;
+            cursor: pointer;
+            transition: all .2s;
+            margin-bottom: 14px;
+        }
+
+            .drop-zone:hover, .drop-zone.over {
+                border-color: var(--primary);
+                background: var(--primary-lt);
+            }
+
+        .file-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 12px;
+        }
+
+        .file-card {
+            background: #fff;
+            border: 1px solid #e8e7e2;
+            border-radius: 10px;
+            padding: 14px;
+            transition: box-shadow .15s;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+            .file-card:hover {
+                box-shadow: 0 4px 12px rgba(0,0,0,.07);
+            }
+
+        .file-card-top {
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+        }
+
+        .file-type-badge {
+            width: 40px;
+            height: 40px;
+            border-radius: 9px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            flex-shrink: 0;
+        }
+
+        .badge-pdf {
+            background: #FAECE7;
+            color: #993C1D;
+        }
+
+        .badge-doc {
+            background: #E6F1FB;
+            color: #185FA5;
+        }
+
+        .badge-image {
+            background: #E1F5EE;
+            color: #0F6E56;
+        }
+
+        .file-info-title {
+            font-size: 13px;
+            font-weight: 600;
+            color: #1a1a1a;
+            line-height: 1.3;
+        }
+
+        .file-info-meta {
+            font-size: 11px;
+            color: #aaa;
+            margin-top: 3px;
+        }
+
+        .cat-tag {
+            display: inline-block;
+            font-size: 11px;
+            padding: 2px 8px;
+            border-radius: 6px;
+            font-weight: 600;
+            background: var(--primary-lt);
+            color: var(--primary);
+            border: 1px solid var(--primary-md);
+        }
+
+        .subcat-tag {
+            display: inline-block;
+            font-size: 11px;
+            padding: 2px 8px;
+            border-radius: 6px;
+            background: #f0f0ee;
+            color: #666;
+            border: 1px solid #e0e0dd;
+        }
+
+        .file-actions {
+            display: flex;
+            gap: 6px;
+            flex-wrap: wrap;
+        }
+
+        .act-btn {
+            font-size: 11px;
+            padding: 5px 10px;
+            border-radius: 6px;
+            text-decoration: none;
+            border: 1px solid;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            background: #fff;
+            transition: all .15s;
+        }
+
+        .act-view {
+            color: var(--primary);
+            border-color: var(--primary-md);
+        }
+
+            .act-view:hover {
+                background: var(--primary-lt);
+                color: var(--primary);
+            }
+
+        .act-download {
+            color: var(--teal);
+            border-color: #5DCAA5;
+        }
+
+            .act-download:hover {
+                background: var(--teal-lt);
+                color: var(--teal);
+            }
+
+        .act-delete {
+            color: #993C1D;
+            border-color: #F0997B;
+        }
+
+            .act-delete:hover {
+                background: #FAECE7;
+            }
+
+        .search-bar {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 14px;
+        }
+
+            .search-bar input {
+                flex: 1;
+                padding: 8px 14px;
+                border: 1px solid #e8e7e2;
+                border-radius: 8px;
+                font-size: 13px;
+                outline: none;
+                transition: border-color .15s;
+            }
+
+                .search-bar input:focus {
+                    border-color: var(--primary);
+                }
+
+            .search-bar button {
+                padding: 8px 16px;
+                border-radius: 8px;
+                background: var(--primary);
+                color: #fff;
+                border: none;
+                font-size: 13px;
+                cursor: pointer;
+            }
+
+        .group-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 12px;
+            margin-top: 4px;
+        }
+
+        .group-title {
+            font-size: 15px;
+            font-weight: 700;
+            color: #1a1a1a;
+        }
+
+        .group-count {
+            font-size: 12px;
+            background: var(--primary-lt);
+            color: var(--primary);
+            padding: 2px 8px;
+            border-radius: 10px;
+            font-weight: 600;
+        }
+
+        .group-line {
+            flex: 1;
+            height: 1px;
+            background: #f0f0ee;
+        }
+
+        .group-block {
+            margin-bottom: 28px;
+        }
+
+        .empty {
+            text-align: center;
+            padding: 50px 20px;
+            color: #aaa;
+        }
+
+            .empty i {
+                font-size: 44px;
+                display: block;
+                margin-bottom: 10px;
+            }
+
+            .empty p {
+                font-size: 13px;
+            }
+
+        .fs-badge {
+            font-size: 10px;
+            color: #aaa;
+        }
+
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,.4);
+            z-index: 999;
+            align-items: center;
+            justify-content: center;
+        }
+
+            .modal-overlay.show {
+                display: flex;
+            }
+
+        .modal-box {
+            background: #fff;
+            border-radius: 14px;
+            padding: 24px;
+            width: 340px;
+            box-shadow: 0 8px 32px rgba(0,0,0,.15);
+        }
+
+        .modal-title {
+            font-size: 15px;
+            font-weight: 700;
+            margin-bottom: 16px;
+        }
+    </style>
+}
+
+@* ── Alerts ── *@
+@if (TempData["Success"] != null)
+{
+    <div class="alert mb-3"
+         style="background:#E1F5EE;border:1px solid #5DCAA5;
+                border-radius:10px;color:#085041;font-size:13px;">
+        <i class="bi bi-check-circle-fill me-1"></i>
+        @TempData["Success"]
+    </div>
+}
+@if (TempData["Error"] != null)
+{
+    <div class="alert mb-3"
+         style="background:#FAECE7;border:1px solid #F0997B;
+                border-radius:10px;color:#712B13;font-size:13px;">
+        <i class="bi bi-exclamation-circle-fill me-1"></i>
+        @TempData["Error"]
+    </div>
+}
+
+<div class="notes-layout">
+
+    @* ══ LEFT — Category Sidebar ══ *@
+    <aside class="cat-sidebar">
+        <div class="cat-sidebar-header">
+            <span>Categories</span>
+            <span style="font-size:12px;font-weight:400;color:#aaa;
+                         text-transform:none;letter-spacing:0;">
+                @Model.TotalCount টি নোট
+            </span>
+        </div>
+
+        <a asp-action="Index" asp-controller="Note"
+           class="cat-item @(Model.ActiveCategory == null ? "active" : "")">
+            <i class="bi bi-grid-3x3-gap cat-icon"></i>
+            সব Notes
+            <span class="cat-count">@Model.TotalCount</span>
+        </a>
+
+        @foreach (var cat in Model.Categories)
+        {
+            var catCount = allGrouped.ContainsKey(cat) ? allGrouped[cat] : 0;
+            var catIcon = GetCategoryIcon(cat);
+            var isActive = Model.ActiveCategory == cat ? "active" : "";
+
+            <a asp-action="Index" asp-controller="Note"
+           asp-route-category="@cat"
+               class="cat-item @isActive">
+                <i class="bi @catIcon cat-icon"></i>
+                @cat
+                <span class="cat-count">@catCount</span>
+            </a>
+        }
+
+        @if (Model.Categories.Any())
+        {
+            <div style="padding:10px 16px;border-top:1px solid #f0f0ee;margin-top:4px;">
+                <button onclick="showRenameModal()"
+                        style="font-size:11px;color:#888;background:none;
+                               border:none;cursor:pointer;padding:0;">
+                    <i class="bi bi-pencil me-1"></i>Category rename করো
+                </button>
+            </div>
+        }
+    </aside>
+
+    @* ══ RIGHT — Main content ══ *@
+    <div>
+
+        @* Upload Panel *@
+        <div class="upload-panel">
+            <div class="upload-panel-header" onclick="toggleUpload()">
+                <span>
+                    <i class="bi bi-cloud-upload me-1"
+                       style="color:var(--primary);"></i>
+                    নতুন Note Upload করো
+                </span>
+                <i class="bi bi-chevron-down" id="upload-chevron"></i>
+            </div>
+            <div class="upload-body" id="upload-body">
+                <form asp-action="Upload" asp-controller="Note"
+                      method="post" enctype="multipart/form-data"
+                      id="noteUploadForm">
+                    @Html.AntiForgeryToken()
+
+                    <div class="drop-zone" id="noteDropZone"
+                         onclick="document.getElementById('noteFile').click()">
+                        <i class="bi bi-file-earmark-arrow-up"
+                           style="font-size:28px;color:var(--primary);
+                                  display:block;margin-bottom:8px;"></i>
+                        <div style="font-size:13px;color:#555;">
+                            File
+                            <strong style="color:var(--primary);">drag করো</strong>
+                            অথবা
+                            <strong style="color:var(--primary);">ক্লিক করো</strong>
+                        </div>
+                        <div style="font-size:11px;color:#aaa;margin-top:4px;">
+                            PDF, Word, Image — সর্বোচ্চ 30MB
+                        </div>
+                        <div id="noteFileName"
+                             style="margin-top:8px;font-size:12px;
+                                    color:var(--primary);font-weight:600;
+                                    display:none;">
+                        </div>
+                    </div>
+
+                    <input type="file" id="noteFile" name="file"
+                           accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
+                           style="display:none"
+                           onchange="noteFileSelected(this)" />
+
+                    <div class="row g-2">
+                        <div class="col-12">
+                            <label style="font-size:12px;font-weight:600;
+                                          color:#555;margin-bottom:3px;display:block;">
+                                Title <span style="color:red;">*</span>
+                            </label>
+                            <input type="text" name="title" required
+                                   placeholder="যেমন: ER Diagram Notes"
+                                   class="form-control form-control-sm"
+                                   style="border-radius:8px;font-size:13px;" />
+                        </div>
+
+                        <div class="col-6">
+                            <label style="font-size:12px;font-weight:600;
+                                          color:#555;margin-bottom:3px;display:block;">
+                                Category <span style="color:red;">*</span>
+                            </label>
+                            <input type="text" name="category" id="catInput"
+                                   required list="catSuggestions"
+                                   placeholder="যেমন: DBMS, OS, DSA"
+                                   class="form-control form-control-sm"
+                                   value="@Model.ActiveCategory"
+                                   style="border-radius:8px;font-size:13px;" />
+                            <datalist id="catSuggestions">
+                                @foreach (var c in Model.Categories)
+                                {
+                                    <option value="@c"></option>
+                                }
+                            </datalist>
+                        </div>
+
+                        <div class="col-6">
+                            <label style="font-size:12px;font-weight:600;
+                                          color:#555;margin-bottom:3px;display:block;">
+                                Sub-Category
+                                <span style="color:#aaa;font-weight:400;">
+                                    (ঐচ্ছিক)
+                                </span>
+                            </label>
+                            <input type="text" name="subCategory"
+                                   placeholder="যেমন: Normalization"
+                                   class="form-control form-control-sm"
+                                   style="border-radius:8px;font-size:13px;" />
+                        </div>
+
+                        <div class="col-12">
+                            <label style="font-size:12px;font-weight:600;
+                                          color:#555;margin-bottom:3px;display:block;">
+                                Description
+                                <span style="color:#aaa;font-weight:400;">
+                                    (ঐচ্ছিক)
+                                </span>
+                            </label>
+                            <input type="text" name="description"
+                                   placeholder="সংক্ষিপ্ত বিবরণ..."
+                                   class="form-control form-control-sm"
+                                   style="border-radius:8px;font-size:13px;" />
+                        </div>
+
+                        <div class="col-12">
+                            <div style="font-size:11px;color:#888;margin-bottom:5px;">
+                                Quick select:
+                            </div>
+                            <div style="display:flex;flex-wrap:wrap;gap:5px;">
+                                @foreach (var quick in new[]
+                                { "DBMS","OS","DSA","Network","OOP",
+                                "System Design","Algorithm","Math" })
+                                {
+                                    <button type="button"
+                                            onclick="setCat('@quick')"
+                                            style="font-size:11px;padding:3px 10px;
+                                                   border-radius:6px;
+                                                   border:1px solid #e8e7e2;
+                                                   background:#f5f5f3;
+                                                   color:#555;cursor:pointer;">
+                                        @quick
+                                    </button>
+                                }
+                            </div>
+                        </div>
+
+                        <div class="col-12">
+                            <button type="submit" id="uploadBtn"
+                                    style="width:100%;padding:10px;border-radius:8px;
+                                           background:var(--primary);color:#fff;
+                                           border:none;font-size:13px;font-weight:600;
+                                           cursor:pointer;margin-top:4px;">
+                                <i class="bi bi-cloud-upload me-1"></i>Upload করো
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        @* Search bar *@
+        <form asp-action="Index" asp-controller="Note"
+              method="get" class="search-bar">
+            @if (Model.ActiveCategory != null)
+            {
+                <input type="hidden" name="category"
+                       value="@Model.ActiveCategory" />
+            }
+            <input type="text" name="search"
+                   value="@Model.SearchQuery"
+                   placeholder="Title, category, sub-category দিয়ে খোঁজো..." />
+            <button type="submit">
+                <i class="bi bi-search"></i>
+            </button>
+            @if (!string.IsNullOrEmpty(Model.SearchQuery))
+            {
+                <a asp-action="Index"
+               asp-route-category="@Model.ActiveCategory"
+                   style="padding:8px 12px;border-radius:8px;
+                          border:1px solid #e8e7e2;background:#fff;
+                          color:#555;font-size:13px;text-decoration:none;">
+                    <i class="bi bi-x"></i>
+                </a>
+            }
+        </form>
+
+        @* Filter info bar *@
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:14px;">
+            <span style="font-size:13px;color:#888;">
+                @Model.AllNotes.Count টি note দেখানো হচ্ছে
+            </span>
+            @if (Model.ActiveCategory != null)
+            {
+                <span class="cat-tag">
+                    <i class="bi bi-funnel me-1"></i>
+                    @Model.ActiveCategory
+                    <a asp-action="Index" asp-controller="Note"
+                       style="color:inherit;margin-left:4px;text-decoration:none;">
+                        ✕
+                    </a>
+                </span>
+            }
+            @if (!string.IsNullOrEmpty(Model.SearchQuery))
+            {
+                <span class="subcat-tag">
+                    🔍 "@Model.SearchQuery"
+                </span>
+            }
+        </div>
+
+        @* ── Notes list ── *@
+        @if (!Model.AllNotes.Any())
+        {
+            <div class="empty">
+                <i class="bi bi-journal-x"></i>
+                <p>
+                    @if (!string.IsNullOrEmpty(Model.SearchQuery))
+                    {
+                        <text>"@Model.SearchQuery" — কোনো note পাওয়া যায়নি।</text>
+                    }
+                    else
+                    {
+                        <text>এখনো কোনো note upload করা হয়নি।</text>
+                    }
+                </p>
+            </div>
+        }
+        else
+        {
+            @* Category groups *@
+            foreach (var group in Model.GroupedByCategory)
+            {
+                var groupIcon = GetCategoryIcon(group.Key);
+
+                <div class="group-block">
+                    <div class="group-header">
+                        <i class="bi @groupIcon"
+                           style="color:var(--primary);font-size:18px;"></i>
+                        <span class="group-title">@group.Key</span>
+                        <span class="group-count">@group.Value.Count টি</span>
+                        <div class="group-line"></div>
+                    </div>
+
+                    <div class="file-grid">
+                        @foreach (var note in group.Value)
+                        {
+                            var iconCls = GetIconClass(note.FileType);
+                            var badgeCls = GetBadgeClass(note.FileType);
+                            var sizeLabel = GetSizeStr(note.FileSize);
+
+                            <div class="file-card">
+                                <div class="file-card-top">
+                                    <div class="file-type-badge @badgeCls">
+                                        <i class="bi @iconCls"></i>
+                                    </div>
+                                    <div style="flex:1;min-width:0;">
+                                        <div class="file-info-title"
+                                             title="@note.Title">
+                                            @note.Title
+                                        </div>
+                                        <div class="file-info-meta">
+                                            @note.UploadedAt.ToString("dd MMM yyyy")
+                                            &bull;
+                                            <span class="fs-badge">@sizeLabel</span>
+                                        </div>
+                                        @if (!string.IsNullOrEmpty(note.Description))
+                                        {
+                                            <div style="font-size:11px;color:#888;
+                                                        margin-top:3px;line-height:1.4;">
+                                                @note.Description
+                                            </div>
+                                        }
+                                    </div>
+                                </div>
+
+                                <div style="display:flex;flex-wrap:wrap;gap:4px;">
+                                    <span class="cat-tag">@note.Category</span>
+                                    @if (!string.IsNullOrEmpty(note.SubCategory))
+                                    {
+                                        <span class="subcat-tag">
+                                            @note.SubCategory
+                                        </span>
+                                    }
+                                </div>
+
+                                <div class="file-actions">
+                                    <a href="@note.FilePath" target="_blank"
+                                       class="act-btn act-view">
+                                        <i class="bi bi-eye"></i> দেখো
+                                    </a>
+                                    <a href="@note.FilePath"
+                                       download="@note.FileName"
+                                       class="act-btn act-download">
+                                        <i class="bi bi-download"></i> Download
+                                    </a>
+                                    <form asp-action="Delete"
+                              asp-controller="Note"
+                                          method="post"
+                                          onsubmit="return confirm('এই note টি delete করবে?')"
+                                          style="margin:0;">
+                                        @Html.AntiForgeryToken()
+                                        <input type="hidden" name="id"
+                                               value="@note.Id" />
+                                        <input type="hidden" name="returnCategory"
+                                               value="@Model.ActiveCategory" />
+                                        <button type="submit"
+                                                class="act-btn act-delete">
+                                            <i class="bi bi-trash"></i>
+                                        </button>
+                                    </form>
+                                </div>
+                            </div>
+                        }
+                    </div>
+                </div>
+            }
+        }
+
+    </div>
+</div>
+
+@* ══ Rename Modal ══ *@
+<div class="modal-overlay" id="renameModal">
+    <div class="modal-box">
+        <div class="modal-title">
+            <i class="bi bi-pencil me-1" style="color:var(--primary);"></i>
+            Category Rename করো
+        </div>
+        <form asp-action="RenameCategory" asp-controller="Note" method="post">
+            @Html.AntiForgeryToken()
+            <div class="mb-3">
+                <label style="font-size:12px;font-weight:600;
+                               color:#555;margin-bottom:4px;display:block;">
+                    পুরানো Category
+                </label>
+                <select name="oldCategory"
+                        class="form-select form-select-sm"
+                        style="border-radius:8px;font-size:13px;">
+                    @foreach (var cat in Model.Categories)
+                    {
+                        <option value="@cat">@cat</option>
+                    }
+                </select>
+            </div>
+            <div class="mb-3">
+                <label style="font-size:12px;font-weight:600;
+                               color:#555;margin-bottom:4px;display:block;">
+                    নতুন নাম
+                </label>
+                <input type="text" name="newCategory" required
+                       class="form-control form-control-sm"
+                       style="border-radius:8px;font-size:13px;"
+                       placeholder="নতুন category নাম..." />
+            </div>
+            <div class="d-flex gap-2">
+                <button type="submit"
+                        style="flex:1;padding:9px;border-radius:8px;
+                               background:var(--primary);color:#fff;
+                               border:none;font-size:13px;
+                               font-weight:600;cursor:pointer;">
+                    Rename করো
+                </button>
+                <button type="button" onclick="hideRenameModal()"
+                        style="flex:1;padding:9px;border-radius:8px;
+                               background:#f5f5f3;color:#555;
+                               border:1px solid #e8e7e2;
+                               font-size:13px;cursor:pointer;">
+                    Cancel
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        setSidebarProgress(0);
+
+        let uploadOpen = true;
+        function toggleUpload() {
+            const body = document.getElementById('upload-body');
+            const chevron = document.getElementById('upload-chevron');
+            uploadOpen = !uploadOpen;
+            body.style.display = uploadOpen ? 'block' : 'none';
+            chevron.className = uploadOpen
+                ? 'bi bi-chevron-up'
+                : 'bi bi-chevron-down';
+        }
+
+        function noteFileSelected(input) {
+            const el = document.getElementById('noteFileName');
+            if (input.files.length > 0) {
+                el.textContent = '✓ ' + input.files[0].name;
+                el.style.display = 'block';
+            }
+        }
+
+        const zone = document.getElementById('noteDropZone');
+        const inp = document.getElementById('noteFile');
+
+        zone.addEventListener('dragover', e => {
+            e.preventDefault();
+            zone.classList.add('over');
+        });
+        zone.addEventListener('dragleave', () => zone.classList.remove('over'));
+        zone.addEventListener('drop', e => {
+            e.preventDefault();
+            zone.classList.remove('over');
+            if (e.dataTransfer.files.length > 0) {
+                const dt = new DataTransfer();
+                dt.items.add(e.dataTransfer.files[0]);
+                inp.files = dt.files;
+                noteFileSelected(inp);
+            }
+        });
+
+        function setCat(name) {
+            document.getElementById('catInput').value = name;
+        }
+
+        document.getElementById('noteUploadForm')
+            .addEventListener('submit', function () {
+                const btn = document.getElementById('uploadBtn');
+                btn.innerHTML = '<i class="bi bi-hourglass-split me-1"></i>Uploading...';
+                btn.disabled = true;
+            });
+
+        function showRenameModal() {
+            document.getElementById('renameModal').classList.add('show');
+        }
+        function hideRenameModal() {
+            document.getElementById('renameModal').classList.remove('show');
+        }
+        document.getElementById('renameModal').addEventListener('click', function (e) {
+            if (e.target === this) hideRenameModal();
+        });
+    </script>
+}

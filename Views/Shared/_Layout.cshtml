@@ -238,6 +238,28 @@
                 </a>
             </div>
         </nav>
+        <!-- Daily Goal Quick Widget -->
+        <div style="padding:12px 16px;border-top:1px solid #e8e7e2;">
+            <a asp-controller="StudyGoal" asp-action="Index"
+               style="display:flex;align-items:center;gap:8px;
+              text-decoration:none;color:inherit;margin-bottom:8px;">
+                <i class="bi bi-bullseye"
+                   style="color:var(--primary);font-size:14px;"></i>
+                <span style="font-size:12px;font-weight:600;color:#555;">
+                    আজকের Goal
+                </span>
+                <span style="margin-left:auto;font-size:11px;
+                     color:var(--primary);font-weight:700;"
+                      id="layout-goal-pct">—</span>
+            </a>
+            <div style="height:4px;background:#f0f0ee;border-radius:2px;overflow:hidden;">
+                <div id="layout-goal-bar"
+                     style="height:100%;background:var(--primary);
+                    border-radius:2px;width:0%;
+                    transition:width .6s ease;">
+                </div>
+            </div>
+        </div>
 
         <div class="sidebar-footer">
             <div class="sidebar-progress-label">

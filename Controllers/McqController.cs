@@ -12,12 +12,14 @@ namespace ITSoftware.Controllers
     {
         private readonly ExamPrepDbContext _context;
         private readonly McqImportService _importer;
+        private readonly StudyGoalService _goalService;
         private const string SessionKey = "QuizSession";
 
-        public McqController(ExamPrepDbContext context, McqImportService importer)
+        public McqController(ExamPrepDbContext context, McqImportService importer, StudyGoalService goalService)
         {
             _context = context;
             _importer = importer;
+            _goalService = goalService;
         }
 
         // ══════════════════════════════
@@ -282,7 +284,7 @@ namespace ITSoftware.Controllers
                 WrongQuestions = wrongQuestions,
                 Category = session.Category
             };
-
+            await _goalService.LogActivityAsync( activityType: "MCQ", count: session.QuestionIds.Count, description: $"Quiz — {session.CorrectCount}/{session.QuestionIds.Count} সঠিক", referenceId: null);
             // Session clear করো
             HttpContext.Session.Remove(SessionKey);
             return View(vm);

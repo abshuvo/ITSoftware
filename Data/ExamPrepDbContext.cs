@@ -15,7 +15,8 @@ namespace ITSoftware.Data
         public DbSet<McqQuestion> McqQuestions { get; set; }
         public DbSet<Note> Notes { get; set; }
         public DbSet<NonTechTopic> NonTechTopics { get; set; }
-
+        public DbSet<StudyGoal> StudyGoals { get; set; }
+        public DbSet<StudyLog> StudyLogs { get; set; }
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
@@ -35,6 +36,19 @@ namespace ITSoftware.Data
                 new NonTechTopic { Id = 3, Title = "Aptitude — Percentage", Category = "Math", Progress = 0 },
                 new NonTechTopic { Id = 4, Title = "Common HR Questions", Category = "Viva", Progress = 0 }
             );
+
+            modelBuilder.Entity<StudyGoal>().HasData(
+                        new StudyGoal
+                        {
+                            Id = 1,
+                            DailyMcqTarget = 20,
+                            DailyTopicTarget = 2,
+                            DailyNotesMinutes = 30,
+                            IsActive = true,
+                            CreatedAt = new DateTime(2024, 1, 1),
+                            UpdatedAt = new DateTime(2024, 1, 1)
+                        }
+);
         }
     }
 }

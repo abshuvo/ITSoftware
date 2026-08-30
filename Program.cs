@@ -14,7 +14,7 @@ namespace ITSoftware
             // Add services to the container.
             builder.Services.AddControllersWithViews();
             builder.Services.AddScoped<ITSoftware.Services.McqImportService>();
-
+            builder.Services.AddScoped<ITSoftware.Services.StudyGoalService>();
             builder.Services.AddDistributedMemoryCache();
             builder.Services.AddSession();
 
