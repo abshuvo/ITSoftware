@@ -1,0 +1,925 @@
+﻿@model ITSoftware.Models.ViewModels.StudyPlanViewModel
+@{
+    ViewData["Title"] = Model.Plan!.Title;
+    ViewData["Subtitle"] = "তারিখ সিলেক্ট করো, task যোগ করো";
+
+    string Fmt(DateTime d) => d.ToString("yyyy-MM-dd");
+
+    // বাংলা দিন ও মাস
+    string[] BnDay = { "রবি", "সোম", "মঙ্গল", "বুধ", "বৃহ", "শুক্র", "শনি" };
+    string[] BnMon = { "জানু", "ফেব্রু", "মার্চ", "এপ্রিল", "মে", "জুন",
+                       "জুলাই", "আগস্ট", "সেপ্টেম্বর", "অক্টোবর", "নভেম্বর", "ডিসে" };
+
+    string DayName(DateTime d) => BnDay[(int)d.DayOfWeek];
+    string MonName(DateTime d) => BnMon[d.Month - 1];
+}
+
+@section Styles {
+    <style>
+        /* ══ Layout ══ */
+        .planner-wrap {
+            display: grid;
+            grid-template-columns: 1fr 300px;
+            gap: 16px;
+            align-items: start;
+        }
+
+        @@media (max-width: 860px) {
+            .planner-wrap {
+                grid-template-columns: 1fr;
+            }
+
+            .task-panel-sticky {
+                position: static !important;
+            }
+        }
+
+        /* ══ Header bar ══ */
+        .plan-topbar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 14px;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .plan-topbar-left {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .plan-name {
+            font-size: 16px;
+            font-weight: 700;
+            color: #1a1a1a;
+        }
+
+        .plan-range {
+            font-size: 12px;
+            color: #888;
+        }
+
+        /* ══ Overall progress ══ */
+        .overall-bar-wrap {
+            background: #fff;
+            border: 1px solid #e8e7e2;
+            border-radius: 10px;
+            padding: 10px 14px;
+            margin-bottom: 14px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        .overall-track {
+            flex: 1;
+            min-width: 120px;
+            height: 6px;
+            background: #f0f0ee;
+            border-radius: 10px;
+            overflow: hidden;
+        }
+
+        .overall-fill {
+            height: 100%;
+            border-radius: 10px;
+            background: var(--primary);
+            transition: width .4s;
+        }
+
+        .stat-pill {
+            font-size: 11px;
+            color: #888;
+            background: #f5f5f3;
+            border: 1px solid #e8e7e2;
+            border-radius: 20px;
+            padding: 3px 10px;
+            white-space: nowrap;
+        }
+
+            .stat-pill strong {
+                color: #1a1a1a;
+            }
+
+        /* ══ Date cards grid ══ */
+        .dates-grid {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+        }
+
+        .date-card {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 10px 6px 8px;
+            background: #fff;
+            border: 1px solid #e8e7e2;
+            border-radius: 10px;
+            cursor: pointer;
+            text-decoration: none;
+            transition: border-color .15s, box-shadow .15s;
+            min-width: 58px;
+            flex: 1;
+            max-width: 75px;
+        }
+
+            .date-card:hover {
+                border-color: var(--primary-md);
+                box-shadow: 0 2px 8px rgba(0,0,0,.06);
+            }
+
+            /* Active — selected */
+            .date-card.dc-active {
+                border: 2px solid var(--primary);
+                background: var(--primary-lt);
+            }
+
+            /* All tasks done */
+            .date-card.dc-done {
+                background: #E1F5EE;
+                border-color: #5DCAA5;
+            }
+
+            /* Some tasks done */
+            .date-card.dc-partial {
+                background: #FDF5E4;
+                border-color: #F5C855;
+            }
+
+        .dc-dayname {
+            font-size: 10px;
+            color: #aaa;
+            text-transform: uppercase;
+            letter-spacing: .04em;
+            margin-bottom: 2px;
+        }
+
+        .date-card.dc-active .dc-dayname {
+            color: var(--primary);
+        }
+
+        .date-card.dc-done .dc-dayname {
+            color: #0F6E56;
+        }
+
+        .date-card.dc-partial .dc-dayname {
+            color: #854F0B;
+        }
+
+        .dc-num {
+            font-size: 20px;
+            font-weight: 700;
+            color: #1a1a1a;
+            line-height: 1;
+        }
+
+        .date-card.dc-active .dc-num {
+            color: var(--primary);
+        }
+
+        .date-card.dc-done .dc-num {
+            color: #0F6E56;
+        }
+
+        .date-card.dc-partial .dc-num {
+            color: #854F0B;
+        }
+
+        .dc-mon {
+            font-size: 10px;
+            color: #aaa;
+            margin-top: 1px;
+        }
+
+        .date-card.dc-active .dc-mon {
+            color: var(--primary);
+        }
+
+        .date-card.dc-done .dc-mon {
+            color: #0F6E56;
+        }
+
+        .date-card.dc-partial .dc-mon {
+            color: #854F0B;
+        }
+
+        /* dot indicators */
+        .dc-dots {
+            display: flex;
+            gap: 2px;
+            margin-top: 6px;
+            min-height: 6px;
+        }
+
+        .dc-dot {
+            width: 5px;
+            height: 5px;
+            border-radius: 50%;
+        }
+
+        .dot-done {
+            background: #1D9E75;
+        }
+
+        .dot-open {
+            background: var(--primary);
+        }
+
+        .dot-empty {
+            background: #e0e0dd;
+        }
+
+        .dc-pct {
+            font-size: 10px;
+            color: #aaa;
+            margin-top: 3px;
+        }
+
+        .date-card.dc-active .dc-pct {
+            color: var(--primary);
+        }
+
+        .date-card.dc-done .dc-pct {
+            color: #0F6E56;
+        }
+
+        .date-card.dc-partial .dc-pct {
+            color: #854F0B;
+        }
+
+        /* ══ Task Panel ══ */
+        .task-panel-sticky {
+            position: sticky;
+            top: 75px;
+        }
+
+        .task-panel {
+            background: #fff;
+            border: 1px solid #e8e7e2;
+            border-radius: 12px;
+            overflow: hidden;
+        }
+
+        .tp-header {
+            padding: 12px 14px 10px;
+            border-bottom: 1px solid #f0f0ee;
+            background: #fafaf8;
+        }
+
+        .tp-date-big {
+            font-size: 14px;
+            font-weight: 700;
+            color: #1a1a1a;
+        }
+
+        .tp-sub {
+            font-size: 11px;
+            color: #aaa;
+            margin-top: 2px;
+        }
+
+        .tp-prog-row {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-top: 8px;
+        }
+
+        .tp-track {
+            flex: 1;
+            height: 5px;
+            background: #f0f0ee;
+            border-radius: 10px;
+            overflow: hidden;
+        }
+
+        .tp-fill {
+            height: 100%;
+            border-radius: 10px;
+            background: var(--primary);
+            transition: width .35s;
+        }
+
+            .tp-fill.complete {
+                background: #1D9E75;
+            }
+
+        .tp-pct {
+            font-size: 11px;
+            font-weight: 700;
+            color: var(--primary);
+            min-width: 30px;
+            text-align: right;
+        }
+
+            .tp-pct.complete {
+                color: #0F6E56;
+            }
+
+        .tp-body {
+            padding: 12px 14px 14px;
+        }
+
+        /* task rows */
+        .t-row {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 7px 10px;
+            background: #fafaf8;
+            border: 1px solid #e8e7e2;
+            border-radius: 8px;
+            margin-bottom: 5px;
+        }
+
+        .t-check {
+            width: 15px;
+            height: 15px;
+            cursor: pointer;
+            accent-color: var(--primary);
+            flex-shrink: 0;
+        }
+
+        .t-title {
+            flex: 1;
+            font-size: 13px;
+            color: #1a1a1a;
+            min-width: 0;
+            word-break: break-word;
+        }
+
+            .t-title.crossed {
+                text-decoration: line-through;
+                color: #aaa;
+            }
+
+        .t-edit-inp {
+            flex: 1;
+            font-size: 13px;
+            color: #1a1a1a;
+            border: none;
+            background: transparent;
+            outline: none;
+            padding: 0;
+        }
+
+        .t-row.editing {
+            border-color: var(--primary);
+            background: var(--primary-lt);
+        }
+
+        .t-actions {
+            display: flex;
+            gap: 2px;
+            flex-shrink: 0;
+        }
+
+        .t-icon-btn {
+            background: none;
+            border: none;
+            cursor: pointer;
+            color: #ccc;
+            font-size: 14px;
+            padding: 2px 4px;
+            border-radius: 4px;
+            transition: color .12s;
+            line-height: 1;
+        }
+
+            .t-icon-btn:hover {
+                color: #555;
+            }
+
+            .t-icon-btn.danger:hover {
+                color: #993C1D;
+            }
+
+            .t-icon-btn.success:hover {
+                color: #0F6E56;
+            }
+
+        /* add task form */
+        .add-task-form {
+            display: flex;
+            gap: 6px;
+            margin-top: 8px;
+        }
+
+            .add-task-form input {
+                flex: 1;
+                border: 1px solid #e8e7e2;
+                border-radius: 8px;
+                padding: 7px 10px;
+                font-size: 13px;
+                outline: none;
+                transition: border-color .15s;
+                min-width: 0;
+            }
+
+                .add-task-form input:focus {
+                    border-color: var(--primary);
+                }
+
+                .add-task-form input.inp-err {
+                    border-color: #F0997B;
+                }
+
+        .add-task-btn {
+            padding: 7px 12px;
+            border-radius: 8px;
+            background: var(--primary);
+            color: #fff;
+            border: none;
+            font-size: 13px;
+            cursor: pointer;
+            flex-shrink: 0;
+        }
+
+            .add-task-btn:hover {
+                opacity: .88;
+            }
+
+        .err-hint {
+            font-size: 11px;
+            color: #993C1D;
+            margin-top: 4px;
+            display: none;
+        }
+
+        /* no-select state */
+        .tp-empty {
+            padding: 40px 20px;
+            text-align: center;
+            color: #bbb;
+            font-size: 13px;
+        }
+
+            .tp-empty i {
+                font-size: 36px;
+                display: block;
+                margin-bottom: 8px;
+            }
+
+        .task-empty {
+            text-align: center;
+            padding: 18px 10px;
+            color: #bbb;
+            font-size: 12px;
+        }
+    </style>
+}
+
+@* ── Alerts ── *@
+@if (TempData["Success"] != null)
+{
+    <div style="background:#E1F5EE;border:1px solid #5DCAA5;border-radius:10px;
+                    color:#085041;font-size:13px;padding:10px 14px;margin-bottom:12px;">
+        <i class="bi bi-check-circle-fill me-1"></i>@TempData["Success"]
+    </div>
+}
+@if (TempData["Error"] != null)
+{
+    <div style="background:#FAECE7;border:1px solid #F0997B;border-radius:10px;
+                    color:#712B13;font-size:13px;padding:10px 14px;margin-bottom:12px;">
+        <i class="bi bi-exclamation-circle-fill me-1"></i>@TempData["Error"]
+    </div>
+}
+
+@* ── Top bar ── *@
+<div class="plan-topbar">
+    <div class="plan-topbar-left">
+        <a asp-action="Index" asp-controller="StudyPlan"
+           style="color:#888;text-decoration:none;font-size:13px;">
+            <i class="bi bi-arrow-left me-1"></i>সব Plans
+        </a>
+        <span style="color:#ddd;">|</span>
+        <div>
+            <div class="plan-name">@Model.Plan!.Title</div>
+            <div class="plan-range">
+                @Model.Plan.StartDate.ToString("dd MMM") &rarr; @Model.Plan.EndDate.ToString("dd MMM yyyy")
+            </div>
+        </div>
+    </div>
+</div>
+
+@* ── Overall progress bar ── *@
+<div class="overall-bar-wrap" id="overallWrap">
+    <div class="overall-track">
+        <div class="overall-fill" id="overallFill"
+             style="width:@Model.OverallPercent%"></div>
+    </div>
+    <span class="stat-pill" id="statOverall">
+        সামগ্রিক: <strong id="statPct">@Model.OverallPercent%</strong>
+    </span>
+    <span class="stat-pill">
+        Task: <strong id="statDone">@Model.DoneTasks</strong>/<strong id="statTotal">@Model.TotalTasks</strong>
+    </span>
+    <span class="stat-pill">
+        পূর্ণ দিন: <strong>@Model.FullDays</strong>
+    </span>
+    <span class="stat-pill">
+        মোট দিন: <strong>@Model.TotalDays</strong>
+    </span>
+</div>
+
+@* ══════════════════════════════════════════
+   Main layout — Date cards LEFT | Task panel RIGHT
+   ══════════════════════════════════════════ *@
+<div class="planner-wrap">
+
+    @* ── LEFT: Date Cards ── *@
+    <div>
+        <div style="font-size:11px;font-weight:700;color:#aaa;
+                    text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px;">
+            তারিখ সিলেক্ট করো
+        </div>
+        <div class="dates-grid" id="datesGrid">
+            @foreach (var kvp in Model.TasksByDate)
+            {
+                var d = kvp.Key;
+                var tasks = kvp.Value;
+                var total = tasks.Count;
+                var done = tasks.Count(t => t.IsCompleted);
+                var pct = total == 0 ? 0 : (int)Math.Round(done * 100.0 / total);
+                var isActive = Model.ActiveDate.HasValue && Model.ActiveDate.Value.Date == d;
+
+                var cardCls = "date-card";
+                if (isActive) cardCls += " dc-active";
+                else if (total > 0 && pct == 100) cardCls += " dc-done";
+                else if (total > 0 && pct > 0) cardCls += " dc-partial";
+
+                // dot indicators (max 3)
+                var dotTasks = tasks.Take(3).ToList();
+                var emptyDots = Math.Max(0, 1 - dotTasks.Count);
+
+                <a asp-action="Detail" asp-controller="StudyPlan"
+                   asp-route-id="@Model.Plan!.Id"
+                   asp-route-activeDate="@Fmt(d)"
+                   class="@cardCls"
+                   id="dc-@Fmt(d)"
+                   title="@d.ToString("dd MMM yyyy")">
+                    <div class="dc-dayname">@DayName(d)</div>
+                    <div class="dc-num">@d.Day</div>
+                    <div class="dc-mon">@MonName(d)</div>
+                    <div class="dc-dots" id="dots-@Fmt(d)">
+                        @foreach (var t in dotTasks)
+                        {
+                            <div class="dc-dot @(t.IsCompleted ? "dot-done" : "dot-open")"></div>
+                        }
+                        @if (total == 0)
+                        {
+                            <div class="dc-dot dot-empty"></div>
+                        }
+                    </div>
+                    @if (total > 0)
+                    {
+                        <div class="dc-pct" id="pct-@Fmt(d)">@pct%</div>
+                    }
+                    else
+                    {
+                        <div class="dc-pct" id="pct-@Fmt(d)"></div>
+                    }
+                </a>
+            }
+        </div>
+    </div>
+
+    @* ── RIGHT: Task Panel ── *@
+    <div class="task-panel-sticky">
+        <div class="task-panel" id="taskPanel">
+
+            @if (!Model.ActiveDate.HasValue)
+            {
+                @* কোনো date select হয়নি *@
+                <div class="tp-empty">
+                    <i class="bi bi-hand-index"></i>
+                    <p>বাম থেকে একটা তারিখ সিলেক্ট করো</p>
+                </div>
+            }
+            else
+            {
+                var ad = Model.ActiveDate.Value;
+                var atasks = Model.ActiveTasks;
+                var atotal = atasks.Count;
+                var adone = atasks.Count(t => t.IsCompleted);
+                var apct = atotal == 0 ? 0 : (int)Math.Round(adone * 100.0 / atotal);
+                var complete = apct == 100 && atotal > 0;
+
+                @* ── Panel Header ── *@
+                <div class="tp-header">
+                    <div class="tp-date-big">
+                        @DayName(ad), @ad.Day @MonName(ad) @ad.Year
+                    </div>
+                    <div class="tp-sub" id="tp-sub">
+                        @adone/@atotal task সম্পন্ন
+                    </div>
+                    <div class="tp-prog-row">
+                        <div class="tp-track">
+                            <div class="tp-fill @(complete ? "complete" : "")"
+                                 id="tp-fill"
+                                 style="width:@apct%"></div>
+                        </div>
+                        <div class="tp-pct @(complete ? "complete" : "")"
+                             id="tp-pct">
+                            @apct%
+                        </div>
+                    </div>
+                </div>
+
+                @* ── Panel Body ── *@
+                <div class="tp-body">
+                    @* Task list *@
+                    <div id="taskListContainer">
+                        @if (!atasks.Any())
+                        {
+                            <div class="task-empty">
+                                <i class="bi bi-clipboard" style="font-size:24px;display:block;margin-bottom:6px;"></i>
+                                এই দিনে কোনো task নেই।
+                            </div>
+                        }
+                        else
+                        {
+                            @foreach (var task in atasks)
+                            {
+                                <div class="t-row" id="trow-@task.Id">
+                                    @* Checkbox — AJAX *@
+                                    <input type="checkbox"
+                                           class="t-check"
+                                           @(task.IsCompleted ? "checked" : "")
+                                           onchange="toggleTask(@task.Id, this)"
+                                           data-date="@Fmt(ad)"
+                                           data-plan="@Model.Plan!.Id" />
+
+                                    @* Title *@
+                                    <span class="t-title @(task.IsCompleted ? "crossed" : "")"
+                                          id="ttitle-@task.Id">
+                                        @task.Title
+                                    </span>
+
+                                    @* Edit input (hidden by default) *@
+                                    <input type="text" class="t-edit-inp"
+                                           id="tedit-@task.Id"
+                                           value="@task.Title"
+                                           style="display:none;"
+                                           onkeydown="handleEditKey(event, @task.Id, @Model.Plan!.Id, '@Fmt(ad)')" />
+
+                                    @* Action buttons *@
+                                    <div class="t-actions">
+                                        <button class="t-icon-btn"
+                                                id="editBtn-@task.Id"
+                                                onclick="startEdit(@task.Id)"
+                                                title="Edit">
+                                            <i class="bi bi-pencil"></i>
+                                        </button>
+                                        <button class="t-icon-btn success"
+                                                id="saveBtn-@task.Id"
+                                                onclick="saveEdit(@task.Id, @Model.Plan!.Id, '@Fmt(ad)')"
+                                                style="display:none;"
+                                                title="Save">
+                                            <i class="bi bi-check-lg"></i>
+                                        </button>
+                                        <button class="t-icon-btn danger"
+                                                id="cancelBtn-@task.Id"
+                                                onclick="cancelEdit(@task.Id)"
+                                                style="display:none;"
+                                                title="Cancel">
+                                            <i class="bi bi-x-lg"></i>
+                                        </button>
+
+                                        @* Delete form *@
+                                        <form asp-action="DeleteTask" asp-controller="StudyPlan"
+                                              method="post" style="margin:0;"
+                                              onsubmit="return confirm('Task delete করবে?')">
+                                            @Html.AntiForgeryToken()
+                                            <input type="hidden" name="taskId" value="@task.Id" />
+                                            <input type="hidden" name="planId" value="@Model.Plan!.Id" />
+                                            <input type="hidden" name="taskDate" value="@Fmt(ad)" />
+                                            <button type="submit" class="t-icon-btn danger" title="Delete">
+                                                <i class="bi bi-trash"></i>
+                                            </button>
+                                        </form>
+                                    </div>
+                                </div>
+                            }
+                        }
+                    </div>
+
+                    @* ── Add task form ── *@
+                    <div class="add-task-form" style="margin-top:10px;">
+                        <input type="text"
+                               id="newTaskInp"
+                               placeholder="নতুন task লেখো..."
+                               onkeydown="if(event.key==='Enter') submitAddTask()"
+                               oninput="clearErr()" />
+                        <button class="add-task-btn" onclick="submitAddTask()">
+                            <i class="bi bi-plus-lg"></i>
+                        </button>
+                    </div>
+                    <div class="err-hint" id="addErr">Task এর নাম লেখো।</div>
+
+                    @* Hidden form for adding task *@
+                    <form id="addTaskForm"
+                          asp-action="AddTask" asp-controller="StudyPlan"
+                          method="post" style="display:none;">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" name="planId" value="@Model.Plan!.Id" />
+                        <input type="hidden" name="taskDate" value="@Fmt(Model.ActiveDate.Value)" />
+                        <input type="hidden" name="title" id="addTaskTitle" />
+                    </form>
+
+                    @* Hidden form for editing task *@
+                    <form id="editTaskForm"
+                          asp-action="EditTask" asp-controller="StudyPlan"
+                          method="post" style="display:none;">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" name="taskId" id="editTaskId" />
+                        <input type="hidden" name="planId" value="@Model.Plan!.Id" />
+                        <input type="hidden" name="taskDate" value="@Fmt(Model.ActiveDate.Value)" />
+                        <input type="hidden" name="newTitle" id="editTaskTitle" />
+                    </form>
+                </div>
+            }
+
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        // ══════════════════════════════════════
+        //  Add Task
+        // ══════════════════════════════════════
+        function submitAddTask() {
+            const inp = document.getElementById('newTaskInp');
+            const err = document.getElementById('addErr');
+            const val = inp.value.trim();
+
+            if (!val) {
+                inp.classList.add('inp-err');
+                err.style.display = 'block';
+                inp.focus();
+                return;
+            }
+
+            document.getElementById('addTaskTitle').value = val;
+            document.getElementById('addTaskForm').submit();
+        }
+
+        function clearErr() {
+            const inp = document.getElementById('newTaskInp');
+            const err = document.getElementById('addErr');
+            if (inp) inp.classList.remove('inp-err');
+            if (err) err.style.display = 'none';
+        }
+
+        // ══════════════════════════════════════
+        //  Toggle Task — AJAX (page reload নেই)
+        // ══════════════════════════════════════
+        async function toggleTask(taskId, checkbox) {
+            const token = document.querySelector('[name=__RequestVerificationToken]').value;
+
+            try {
+                const res = await fetch('/StudyPlan/ToggleTask', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'RequestVerificationToken': token
+                    },
+                    body: JSON.stringify({ taskId })
+                });
+
+                if (!res.ok) { checkbox.checked = !checkbox.checked; return; }
+
+                const data = await res.json();
+                const dateKey = checkbox.getAttribute('data-date');
+
+                // Task title strikethrough
+                const titleEl = document.getElementById('ttitle-' + taskId);
+                if (titleEl) {
+                    titleEl.classList.toggle('crossed', data.isCompleted);
+                }
+
+                // Day progress bar
+                updateDayProgress(dateKey, data.dayPercent, data.dayDone, data.dayTotal);
+
+                // Date card dots + pct
+                updateDateCard(dateKey, data.dayPercent, data.dayDone, data.dayTotal);
+
+                // Overall progress
+                updateOverall(data.overallPercent, data.overallDone, data.overallTotal);
+
+            } catch (e) {
+                checkbox.checked = !checkbox.checked;
+                console.error('Toggle failed', e);
+            }
+        }
+
+        // ══════════════════════════════════════
+        //  Edit Task — inline
+        // ══════════════════════════════════════
+        function startEdit(taskId) {
+            const titleEl  = document.getElementById('ttitle-' + taskId);
+            const editInp  = document.getElementById('tedit-' + taskId);
+            const editBtn  = document.getElementById('editBtn-' + taskId);
+            const saveBtn  = document.getElementById('saveBtn-' + taskId);
+            const cancelBtn = document.getElementById('cancelBtn-' + taskId);
+            const row = document.getElementById('trow-' + taskId);
+
+            titleEl.style.display  = 'none';
+            editInp.style.display  = 'block';
+            editBtn.style.display  = 'none';
+            saveBtn.style.display  = 'inline-block';
+            cancelBtn.style.display = 'inline-block';
+            row.classList.add('editing');
+            editInp.focus();
+            editInp.select();
+        }
+
+        function cancelEdit(taskId) {
+            const titleEl   = document.getElementById('ttitle-' + taskId);
+            const editInp   = document.getElementById('tedit-' + taskId);
+            const editBtn   = document.getElementById('editBtn-' + taskId);
+            const saveBtn   = document.getElementById('saveBtn-' + taskId);
+            const cancelBtn = document.getElementById('cancelBtn-' + taskId);
+            const row = document.getElementById('trow-' + taskId);
+
+            // original value এ ফেরত
+            editInp.value = titleEl.textContent.trim();
+
+            titleEl.style.display   = 'block';
+            editInp.style.display   = 'none';
+            editBtn.style.display   = 'inline-block';
+            saveBtn.style.display   = 'none';
+            cancelBtn.style.display = 'none';
+            row.classList.remove('editing');
+        }
+
+        function saveEdit(taskId, planId, taskDate) {
+            const editInp = document.getElementById('tedit-' + taskId);
+            const val = editInp.value.trim();
+            if (!val) { editInp.focus(); return; }
+
+            document.getElementById('editTaskId').value    = taskId;
+            document.getElementById('editTaskTitle').value = val;
+            document.getElementById('editTaskForm').submit();
+        }
+
+        function handleEditKey(event, taskId, planId, taskDate) {
+            if (event.key === 'Enter')  saveEdit(taskId, planId, taskDate);
+            if (event.key === 'Escape') cancelEdit(taskId);
+        }
+
+        // ══════════════════════════════════════
+        //  UI update helpers
+        // ══════════════════════════════════════
+        function updateDayProgress(dateKey, pct, done, total) {
+            const fill = document.getElementById('tp-fill');
+            const pctEl = document.getElementById('tp-pct');
+            const subEl = document.getElementById('tp-sub');
+            if (!fill) return;
+
+            fill.style.width = pct + '%';
+            fill.classList.toggle('complete', pct === 100 && total > 0);
+            if (pctEl) {
+                pctEl.textContent = pct + '%';
+                pctEl.classList.toggle('complete', pct === 100 && total > 0);
+            }
+            if (subEl) subEl.textContent = done + '/' + total + ' task সম্পন্ন';
+        }
+
+        function updateDateCard(dateKey, pct, done, total) {
+            const card = document.getElementById('dc-' + dateKey);
+            if (!card) return;
+
+            // class reset — active class ঠিক রাখো
+            const wasActive = card.classList.contains('dc-active');
+            card.className = 'date-card';
+            if (wasActive)           card.classList.add('dc-active');
+            else if (total > 0 && pct === 100) card.classList.add('dc-done');
+            else if (total > 0 && pct > 0)     card.classList.add('dc-partial');
+
+            // pct label
+            const pctEl = document.getElementById('pct-' + dateKey);
+            if (pctEl) pctEl.textContent = total > 0 ? pct + '%' : '';
+        }
+
+        function updateOverall(pct, done, total) {
+            const fill  = document.getElementById('overallFill');
+            const pctEl = document.getElementById('statPct');
+            const doneEl = document.getElementById('statDone');
+            const totEl  = document.getElementById('statTotal');
+            if (fill)   fill.style.width = pct + '%';
+            if (pctEl)  pctEl.textContent = pct + '%';
+            if (doneEl) doneEl.textContent = done;
+            if (totEl)  totEl.textContent = total;
+        }
+
+        // page load এ new task input focus করো যদি date selected থাকে
+        const newInp = document.getElementById('newTaskInp');
+        if (newInp) newInp.focus();
+    </script>
+}
