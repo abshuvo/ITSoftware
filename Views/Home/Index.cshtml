@@ -1,4 +1,4 @@
-﻿@model ITSoftware.Models.ViewModels.DashboardViewModel
+@model ITSoftware.Models.ViewModels.DashboardViewModel
 @{
     ViewData["Title"] = "Dashboard";
     ViewData["Subtitle"] = "তোমার প্রস্তুতির সামগ্রিক চিত্র";
@@ -275,15 +275,14 @@
     </style>
 }
 
-<!-- ══ Row 1 — Stat cards ══ -->
 <div class="row g-3 mb-4">
     <div class="col-6 col-md-4 col-lg-2">
         <div class="stat-card">
             <div class="stat-icon bg-purple-lt c-purple">
-                <i class="bi bi-file-earmark-text"></i>
+                <i class="bi bi-patch-question"></i>
             </div>
-            <div class="stat-value c-purple">@Model.SyllabusCount</div>
-            <div class="stat-label">Syllabus Files</div>
+            <div class="stat-value c-purple">@Model.PreviousYearQuestionCount</div>
+            <div class="stat-label">বিগত সালের প্রশ্ন</div>
         </div>
     </div>
     <div class="col-6 col-md-4 col-lg-2">
@@ -325,10 +324,10 @@
     <div class="col-6 col-md-4 col-lg-2">
         <div class="stat-card">
             <div class="stat-icon bg-teal-lt c-teal">
-                <i class="bi bi-people"></i>
+                <i class="bi bi-check2-all"></i>
             </div>
-            <div class="stat-value c-teal">@Model.NonTechCount</div>
-            <div class="stat-label">Non-Tech Topics</div>
+            <div class="stat-value c-teal">@Model.PreviousYearSolvedCount</div>
+            <div class="stat-label">প্রশ্ন সমাধানকৃত</div>
         </div>
     </div>
 </div>
@@ -344,26 +343,26 @@
     @{
         var sections = new[]
         {
-        new { Num="01", Title="Syllabus & Guidelines",
-        Desc="পরীক্ষার সিলেবাস এবং নির্দেশিকা",
-        Icon="bi-file-earmark-text", Color="#534AB7",
-        Ctrl="Syllabus" },
-        new { Num="02", Title="Important Topics",
-        Desc="গুরুত্বপূর্ণ টপিক ও অগ্রগতি ট্র্যাকিং",
-        Icon="bi-star", Color="#1D9E75",
-        Ctrl="Topic" },
-        new { Num="03", Title="Technical MCQ",
+        new { Num="01", Title="Previous Year Questions",
+        Desc="৪১৪টি ব্যাংক আইটি বিগত সালের প্রশ্ন ও ফিল্টার",
+        Icon="bi-patch-question", Color="#534AB7",
+        Ctrl="PreviousYearQuestion" },
+        new { Num="02", Title="Technical MCQ",
         Desc="MCQ আপলোড, প্র্যাকটিস ও স্কোর",
         Icon="bi-check-circle", Color="#BA7517",
         Ctrl="Mcq" },
-        new { Num="04", Title="Written Notes",
+        new { Num="03", Title="Written Notes",
         Desc="PDF ও ছবি আকারে নোটস",
         Icon="bi-journal-text", Color="#993C1D",
         Ctrl="Note" },
-        new { Num="05", Title="Non-Technical Prep",
-        Desc="GK, বাংলা, ইংরেজি, গণিত, Viva",
-        Icon="bi-people", Color="#534AB7",
-        Ctrl="NonTech" },
+        new { Num="04", Title="Study Plan",
+        Desc="দৈনিক ও সাপ্তাহিক স্টাডি প্ল্যানিং",
+        Icon="bi-people", Color="#1D9E75",
+        Ctrl="StudyPlan" },
+        new { Num="05", Title="Question Analytics",
+        Desc="১৪টি ক্যাটাগরি ও প্রায়োরিটি অ্যানালাইসিস",
+        Icon="bi-pie-chart", Color="#534AB7",
+        Ctrl="PreviousYearQuestion" }
         };
     }
 

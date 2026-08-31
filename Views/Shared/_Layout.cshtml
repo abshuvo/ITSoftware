@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="utf-8" />
@@ -334,27 +334,35 @@
             </div>
 
             <div class="nav-label" style="margin-top:8px;">Sections</div>
-            <div class="nav-item">
+           @*  <div class="nav-item">
                 <a asp-controller="Syllabus" asp-action="Index"
                    class="@(ViewContext.RouteData.Values["controller"]?.ToString() == "Syllabus" ? "active" : "")">
                     <i class="bi bi-file-earmark-text nav-icon"></i>
                     <span class="nav-text">Syllabus &amp; Guidelines</span>
                     <span class="nav-badge">1</span>
                 </a>
-            </div>
-            <div class="nav-item">
+            </div> *@
+         @*    <div class="nav-item">
                 <a asp-controller="Topic" asp-action="Index"
                    class="@(ViewContext.RouteData.Values["controller"]?.ToString() == "Topic" ? "active" : "")">
                     <i class="bi bi-star nav-icon"></i>
                     Important Topics
                     <span class="nav-badge">2</span>
                 </a>
+            </div> *@
+            <div class="nav-item">
+                <a asp-controller="PreviousYearQuestion" asp-action="Index"
+                   class="@(ViewContext.RouteData.Values["controller"]?.ToString() == "PreviousYearQuestion" ? "active" : "")">
+                    <i class="bi bi-patch-question nav-icon"></i>
+                    <span class="nav-text">Previous Year Questions</span>
+                    <span class="nav-badge">414</span>
+                </a>
             </div>
             <div class="nav-item">
                 <a asp-controller="Mcq" asp-action="Index"
                    class="@(ViewContext.RouteData.Values["controller"]?.ToString() == "Mcq" ? "active" : "")">
                     <i class="bi bi-check-circle nav-icon"></i>
-                    Technical MCQ
+                    <span class="nav-text">Technical MCQ</span>
                     <span class="nav-badge">3</span>
                 </a>
             </div>
@@ -366,14 +374,14 @@
                     <span class="nav-badge">4</span>
                 </a>
             </div>
-            <div class="nav-item">
+           @*  <div class="nav-item">
                 <a asp-controller="NonTech" asp-action="Index"
                    class="@(ViewContext.RouteData.Values["controller"]?.ToString() == "NonTech" ? "active" : "")">
                     <i class="bi bi-people nav-icon"></i>
                     Non-Technical Prep
                     <span class="nav-badge">5</span>
                 </a>
-            </div>
+            </div> *@
             <div class="nav-item">
                 <a asp-controller="StudyPlan" asp-action="Index"
                    class="@(ViewContext.RouteData.Values["controller"]?.ToString() == "StudyPlan" ? "active" : "")">
