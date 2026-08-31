@@ -20,6 +20,7 @@ namespace ITSoftware.Data
         public DbSet<StudyLog> StudyLogs { get; set; }
 
         public DbSet<StudyPlan> StudyPlans { get; set; }
+        public DbSet<StudyTask> StudyTasks { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {

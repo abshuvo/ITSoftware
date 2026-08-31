@@ -1,4 +1,4 @@
-﻿/*using ITSoftware.Data;
+﻿using ITSoftware.Data;
 using ITSoftware.Models;
 using ITSoftware.Models.ViewModels;
 using Microsoft.AspNetCore.Mvc;
@@ -287,4 +287,4 @@ namespace ITSoftware.Controllers
     {
         public int TaskId { get; set; }
     }
-}*/
+}
