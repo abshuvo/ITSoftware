@@ -1,4 +1,4 @@
-﻿using ITSoftware.Data;
+using ITSoftware.Data;
 using ITSoftware.Models;
 using ITSoftware.Models.ViewModels;
 using ITSoftware.Services;
@@ -25,24 +25,110 @@ namespace ITSoftware.Controllers
         // ══════════════════════════════
         //  Index — MCQ list + upload
         // ══════════════════════════════
-        public async Task<IActionResult> Index(string? category)
+        public async Task<IActionResult> Index(string? category, string? subCategory, string? search, int page = 1, int pageSize = 20)
         {
+            if (pageSize < 5) pageSize = 20;
+            if (pageSize > 100) pageSize = 100;
+
+            // Auto seed / sync if questions are empty, missing, or using old category names
+            var totalSeedCount = McqQuestionSeeder.GetAllMcqQuestions().Count;
+            var currentDbCount = await _context.McqQuestions.CountAsync();
+            var hasNewFormat = await _context.McqQuestions.AnyAsync(q => q.Category == "Operating System");
+            var hasOldFormat = await _context.McqQuestions.AnyAsync(q => q.Category == "Basics" || q.Category == "Process Scheduling" || q.Category == "Process Synchronization");
+            if (currentDbCount < totalSeedCount || !hasNewFormat || hasOldFormat)
+            {
+                await McqQuestionSeeder.InitializeAsync(HttpContext.RequestServices);
+            }
+
             var query = _context.McqQuestions.AsQueryable();
 
-            if (!string.IsNullOrEmpty(category))
+            if (!string.IsNullOrWhiteSpace(category))
                 query = query.Where(q => q.Category == category);
+
+            if (!string.IsNullOrWhiteSpace(subCategory))
+                query = query.Where(q => q.SubCategory == subCategory);
+
+            if (!string.IsNullOrWhiteSpace(search))
+            {
+                query = query.Where(q =>
+                    q.QuestionText.Contains(search) ||
+                    (q.Explanation != null && q.Explanation.Contains(search)) ||
+                    (q.Category != null && q.Category.Contains(search)) ||
+                    (q.SubCategory != null && q.SubCategory.Contains(search)) ||
+                    (q.Tag != null && q.Tag.Contains(search)));
+            }
+
+            var filteredCount = await query.CountAsync();
+            var totalPages = pageSize > 0 ? (int)Math.Ceiling((double)filteredCount / pageSize) : 1;
+            if (page < 1) page = 1;
+            if (page > totalPages && totalPages > 0) page = totalPages;
+
+            var questions = await query
+                .OrderBy(q => q.Category)
+                .ThenBy(q => q.SubCategory)
+                .ThenBy(q => q.Id)
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
+                .ToListAsync();
+
+            var allMcqs = await _context.McqQuestions.ToListAsync();
+            var categoryCounts = allMcqs
+                .Where(q => !string.IsNullOrEmpty(q.Category))
+                .GroupBy(q => q.Category!)
+                .ToDictionary(g => g.Key, g => g.Count());
+
+            var subCategoryQuery = allMcqs.AsEnumerable();
+            if (!string.IsNullOrEmpty(category))
+            {
+                subCategoryQuery = subCategoryQuery.Where(q => q.Category == category);
+            }
+
+            var subCategoryCounts = subCategoryQuery
+                .Where(q => !string.IsNullOrEmpty(q.SubCategory))
+                .GroupBy(q => q.SubCategory!)
+                .ToDictionary(g => g.Key, g => g.Count());
+
+            var categories = categoryCounts.Keys.OrderBy(GetCategorySortOrder).ThenBy(c => c).ToList();
+            var subCategories = subCategoryCounts.Keys.OrderBy(GetSubCategorySortOrder).ThenBy(c => c).ToList();
+
+            var categoryTree = allMcqs
+                .Where(q => !string.IsNullOrEmpty(q.Category))
+                .GroupBy(q => q.Category!)
+                .OrderBy(g => GetCategorySortOrder(g.Key))
+                .ThenBy(g => g.Key)
+                .Select(g => new CategoryTreeItem
+                {
+                    CategoryName = g.Key,
+                    TotalCount = g.Count(),
+                    SubCategories = g
+                        .Where(q => !string.IsNullOrEmpty(q.SubCategory))
+                        .GroupBy(q => q.SubCategory!)
+                        .OrderBy(sg => GetSubCategorySortOrder(sg.Key))
+                        .ThenBy(sg => sg.Key)
+                        .Select(sg => new SubCategoryItem
+                        {
+                            SubCategoryName = sg.Key,
+                            Count = sg.Count()
+                        })
+                        .ToList()
+                })
+                .ToList();
 
             var vm = new McqIndexViewModel
             {
-                Questions = await query.OrderByDescending(q => q.CreatedAt).ToListAsync(),
-                Categories = await _context.McqQuestions
-                                     .Where(q => q.Category != null)
-                                     .Select(q => q.Category!)
-                                     .Distinct()
-                                     .OrderBy(c => c)
-                                     .ToListAsync(),
+                Questions = questions,
+                CategoryTree = categoryTree,
+                Categories = categories,
+                CategoryCounts = categoryCounts,
+                SubCategories = subCategories,
+                SubCategoryCounts = subCategoryCounts,
                 FilterCategory = category,
-                TotalCount = await _context.McqQuestions.CountAsync()
+                FilterSubCategory = subCategory,
+                SearchQuery = search,
+                TotalCount = allMcqs.Count,
+                FilteredCount = filteredCount,
+                CurrentPage = page,
+                PageSize = pageSize
             };
 
             vm.ImportedCount = TempData["ImportedCount"] != null
@@ -50,6 +136,19 @@ namespace ITSoftware.Controllers
                 : 0;
 
             return View(vm);
+        }
+
+        // ══════════════════════════════
+        //  Reset / Re-seed all MCQs
+        // ══════════════════════════════
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> ResetData()
+        {
+            await McqQuestionSeeder.InitializeAsync(HttpContext.RequestServices, forceReset: true);
+            var count = McqQuestionSeeder.GetAllMcqQuestions().Count;
+            TempData["Success"] = $"সকল {count}টি নতুন টপিকভিত্তিক টেকনিক্যাল MCQ সফলভাবে লোড করা হয়েছে!";
+            return RedirectToAction(nameof(Index));
         }
 
         // ══════════════════════════════
@@ -130,11 +229,13 @@ namespace ITSoftware.Controllers
         // ══════════════════════════════
         //  Quiz — Start
         // ══════════════════════════════
-        public async Task<IActionResult> StartQuiz(string? category)
+        public async Task<IActionResult> StartQuiz(string? category, string? subCategory)
         {
             var query = _context.McqQuestions.AsQueryable();
             if (!string.IsNullOrEmpty(category))
                 query = query.Where(q => q.Category == category);
+            if (!string.IsNullOrEmpty(subCategory))
+                query = query.Where(q => q.SubCategory == subCategory);
 
             var ids = await query.Select(q => q.Id).ToListAsync();
 
@@ -155,6 +256,7 @@ namespace ITSoftware.Controllers
                 CorrectCount = 0,
                 WrongCount = 0,
                 Category = category,
+                SubCategory = subCategory,
                 IsFinished = false
             };
 
@@ -305,5 +407,31 @@ namespace ITSoftware.Controllers
             return json == null ? null
                 : JsonSerializer.Deserialize<QuizSessionViewModel>(json);
         }
+
+
+        private static int GetCategorySortOrder(string cat) => cat switch
+        {
+            "Operating System" => 1,
+            "Data Structures & Algorithms" => 2,
+            "Networking & Data Communication" => 3,
+            "Database & SQL" => 4,
+            "Software Engineering & OOP" => 5,
+            "Digital Logic & Architecture" => 6,
+            "Cybersecurity" => 7,
+            "General Knowledge & Analytical" => 8,
+            _ => 99
+        };
+
+        private static int GetSubCategorySortOrder(string subCat) => subCat switch
+        {
+            "Basics" => 1,
+            "Process Scheduling" => 2,
+            "Process Synchronization" => 3,
+            "Deadlock" => 4,
+            "Multithreading" => 5,
+            "Memory Management" => 6,
+            "Disk Management" => 7,
+            _ => 50
+        };
     }
 }

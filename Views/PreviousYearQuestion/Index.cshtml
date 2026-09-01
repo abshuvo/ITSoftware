@@ -1,7 +1,7 @@
 @model ITSoftware.Models.ViewModels.PreviousYearQuestionIndexViewModel
 @{
     ViewData["Title"] = "Previous Year Questions";
-    ViewData["Subtitle"] = "ব্যাংক আইটি পরীক্ষার বিগত সালের প্রশ্নব্যাংক (২০২০–২০২৬)";
+    ViewData["Subtitle"] = "ব্যাংক আইটি পরীক্ষার বিগত সালের প্রশ্নব্যাংক (২০১১–২০২৬)";
 
     var currentCatSummary = Model.CategorySummaries.FirstOrDefault(c => c.Category == Model.ActiveCategory);
 }
@@ -571,8 +571,8 @@
             <i class="bi bi-calendar-range"></i>
         </div>
         <div>
-            <div class="stat-mini-val" style="color:#993C1D;">2020–2026</div>
-            <div class="stat-mini-lbl">৭ বছরের প্রশ্ন</div>
+            <div class="stat-mini-val" style="color:#993C1D;">2011–2026</div>
+            <div class="stat-mini-lbl">বিগত সালের প্রশ্ন</div>
         </div>
     </div>
 </div>
@@ -656,13 +656,16 @@
             }
         </div>
 
-        <div style="padding:12px 16px;border-top:1px solid #f0f0ee;background:#fafaf8;display:flex;justify-content:space-between;align-items:center;">
+        <div style="padding:12px 16px;border-top:1px solid #f0f0ee;background:#fafaf8;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:6px;">
             <button class="btn btn-sm btn-outline-primary" style="font-size:11px;border-radius:6px;" data-bs-toggle="modal" data-bs-target="#addQuestionModal">
-                <i class="bi bi-plus-lg me-1"></i>প্রশ্ন যোগ করুন
+                <i class="bi bi-plus-lg me-1"></i>প্রশ্ন যোগ
             </button>
-            <form asp-action="ResetData" method="post" onsubmit="return confirm('আপনি কি নিশ্চিত যে সকল ৪১৪টি প্রশ্ন পুনরায় লোড করতে চান?')">
+            <a asp-action="ExportExcel" asp-route-all="true" class="btn btn-sm btn-outline-success" style="font-size:11px;border-radius:6px;" title="সকল বিগত সালের প্রশ্ন এক্সেলে ডাউনলোড">
+                <i class="bi bi-file-earmark-excel-fill me-1"></i>Excel ডাউনলোড
+            </a>
+            <form asp-action="ResetData" method="post" onsubmit="return confirm('আপনি কি নিশ্চিত যে সকল প্রশ্ন পুনরায় লোড ও রিসেট করতে চান?')">
                 @Html.AntiForgeryToken()
-                <button type="submit" class="btn btn-sm btn-link text-muted p-0" style="font-size:11px;text-decoration:none;">
+                <button type="submit" class="btn btn-sm btn-link text-muted p-0" style="font-size:11px;text-decoration:none;" title="রিসেট প্রশ্ন">
                     <i class="bi bi-arrow-clockwise"></i> রিসেট
                 </button>
             </form>
@@ -772,8 +775,70 @@
                         </a>
                     </div>
 
-                    <div style="font-size:12.5px;color:#777;">
-                        দেখাচ্ছে: <strong style="color:var(--primary);">@Model.Questions.Count</strong> টি প্রশ্ন
+                    <div class="d-flex align-items-center gap-3">
+                        <div style="font-size:12.5px;color:#777;">
+                            দেখাচ্ছে: <strong style="color:var(--primary);">@Model.Questions.Count</strong> টি প্রশ্ন
+                        </div>
+
+                        <!-- Excel Export Dropdown -->
+                        <div class="dropdown">
+                            <button class="btn btn-sm btn-success dropdown-toggle d-inline-flex align-items-center gap-1 shadow-sm" type="button" data-bs-toggle="dropdown" aria-expanded="false" style="font-size:12px; padding: 4px 12px; border-radius: 7px; font-weight: 600;">
+                                <i class="bi bi-file-earmark-excel-fill"></i> Excel এ ডাউনলোড
+                            </button>
+                            <ul class="dropdown-menu dropdown-menu-end shadow-sm" style="font-size:12.5px; border-radius: 8px; min-width: 260px;">
+                                <li>
+                                    <h6 class="dropdown-header text-uppercase" style="font-size:10.5px; letter-spacing:0.5px;">Excel (.xlsx) ফরম্যাট</h6>
+                                </li>
+                                <li>
+                                    <a class="dropdown-item d-flex align-items-center justify-content-between py-2" asp-action="ExportExcel"
+                                       asp-route-category="@Model.ActiveCategory"
+                                       asp-route-year="@Model.ActiveYear"
+                                       asp-route-examOrg="@Model.ActiveExamOrg"
+                                       asp-route-post="@Model.ActivePost"
+                                       asp-route-search="@Model.SearchQuery"
+                                       asp-route-status="@Model.ActiveStatus">
+                                        <span class="d-flex align-items-center gap-2">
+                                            <i class="bi bi-filter-circle text-success"></i> বর্তমান ফিল্টারের প্রশ্ন
+                                        </span>
+                                        <span class="badge bg-light text-dark border">@Model.Questions.Count</span>
+                                    </a>
+                                </li>
+                                <li>
+                                    <a class="dropdown-item d-flex align-items-center justify-content-between py-2" asp-action="ExportExcel" asp-route-all="true">
+                                        <span class="d-flex align-items-center gap-2">
+                                            <i class="bi bi-database-down text-primary"></i> সকল প্রশ্ন (সব ক্যাটাগরি)
+                                        </span>
+                                        <span class="badge bg-light text-dark border">@Model.TotalCount</span>
+                                    </a>
+                                </li>
+                                <li><hr class="dropdown-divider my-1"></li>
+                                <li>
+                                    <h6 class="dropdown-header text-uppercase" style="font-size:10.5px; letter-spacing:0.5px;">ব্যাংক অনুযায়ী ফিল্টার</h6>
+                                </li>
+                                <li>
+                                    <a class="dropdown-item d-flex align-items-center gap-2 py-2" asp-action="ExportExcel" asp-route-all="true" asp-route-bankType="bb">
+                                        <i class="bi bi-bank text-danger"></i> শুধুমাত্র বাংলাদেশ ব্যাংক (BB)
+                                    </a>
+                                </li>
+                                <li>
+                                    <a class="dropdown-item d-flex align-items-center gap-2 py-2" asp-action="ExportExcel" asp-route-all="true" asp-route-bankType="combined">
+                                        <i class="bi bi-building text-info"></i> শুধুমাত্র কম্বাইন্ড ব্যাংক (Combined)
+                                    </a>
+                                </li>
+                                <li><hr class="dropdown-divider my-1"></li>
+                                <li>
+                                    <a class="dropdown-item d-flex align-items-center gap-2 py-2 text-muted" asp-action="ExportCsv"
+                                       asp-route-category="@Model.ActiveCategory"
+                                       asp-route-year="@Model.ActiveYear"
+                                       asp-route-examOrg="@Model.ActiveExamOrg"
+                                       asp-route-post="@Model.ActivePost"
+                                       asp-route-search="@Model.SearchQuery"
+                                       asp-route-status="@Model.ActiveStatus">
+                                        <i class="bi bi-filetype-csv"></i> CSV ফাইল হিসেবে ডাউনলোড (.csv)
+                                    </a>
+                                </li>
+                            </ul>
+                        </div>
                     </div>
                 </div>
             </form>
