@@ -1,4 +1,4 @@
-﻿using ITSoftware.Data;
+using ITSoftware.Data;
 using ITSoftware.Models;
 using ITSoftware.Models.ViewModels;
 using Microsoft.AspNetCore.Mvc;
@@ -47,6 +47,8 @@ namespace ITSoftware.Controllers
                 McqCount = mcqs.Count,
                 NoteCount = await _context.Notes.CountAsync(),
                 NonTechCount = await _context.NonTechTopics.CountAsync(),
+                PreviousYearQuestionCount = await _context.PreviousYearQuestions.CountAsync(),
+                PreviousYearSolvedCount = await _context.PreviousYearQuestions.CountAsync(q => q.IsSolved),
                 OverallProgress = overallProgress,
                 RecentTopics = topics.OrderByDescending(t => t.CreatedAt).Take(5).ToList(),
                 RecentMcqs = mcqs.OrderByDescending(m => m.CreatedAt).Take(3).ToList(),

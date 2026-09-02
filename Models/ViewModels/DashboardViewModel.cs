@@ -1,4 +1,4 @@
-﻿namespace ITSoftware.Models.ViewModels
+namespace ITSoftware.Models.ViewModels
 {
     public class DashboardViewModel
     {
@@ -9,6 +9,8 @@
         public int McqCount { get; set; }
         public int NoteCount { get; set; }
         public int NonTechCount { get; set; }
+        public int PreviousYearQuestionCount { get; set; }
+        public int PreviousYearSolvedCount { get; set; }
 
         // Overall progress (0-100)
         public int OverallProgress { get; set; }

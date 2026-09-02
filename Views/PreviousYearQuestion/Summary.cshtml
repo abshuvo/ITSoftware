@@ -1,0 +1,144 @@
+@model List<ITSoftware.Models.ViewModels.TopicCategorySummary>
+@{
+    ViewData["Title"] = "Question Bank Analytics";
+    ViewData["Subtitle"] = "ব্যাংক আইটি পরীক্ষার প্রশ্ন বিন্যাস ও ক্যাটাগরি বিশ্লেষণ (২০২০–২০২৬)";
+
+    int grandTotal = Model.Sum(m => m.TotalQuestions);
+    int grandSolved = Model.Sum(m => m.SolvedQuestions);
+    int overallProgress = grandTotal == 0 ? 0 : (int)((double)grandSolved / grandTotal * 100);
+}
+
+@section Styles {
+    <style>
+        .summary-card {
+            background: #fff;
+            border: 1px solid #e8e7e2;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 2px 8px rgba(0,0,0,.03);
+            margin-bottom: 24px;
+        }
+
+        .summary-header {
+            padding: 16px 20px;
+            background: #fafaf8;
+            border-bottom: 1px solid #f0f0ee;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .summary-table {
+            width: 100%;
+            margin-bottom: 0;
+            border-collapse: collapse;
+        }
+
+        .summary-table th {
+            font-size: 11.5px;
+            font-weight: 700;
+            color: #6b7280;
+            text-transform: uppercase;
+            letter-spacing: .05em;
+            padding: 12px 16px;
+            background: #f9fafb;
+            border-bottom: 1px solid #e5e7eb;
+        }
+
+        .summary-table td {
+            font-size: 13px;
+            padding: 12px 16px;
+            border-bottom: 1px solid #f3f4f6;
+            vertical-align: middle;
+        }
+
+        .summary-table tr:hover td {
+            background: #fdfdfc;
+        }
+
+        .priority-stars {
+            color: #d97706;
+            letter-spacing: 2px;
+            font-size: 12px;
+        }
+    </style>
+}
+
+<div class="d-flex align-items-center justify-content-between mb-3 flex-wrap gap-2">
+    <div>
+        <a asp-action="Index" class="btn btn-outline-secondary btn-sm" style="border-radius:8px;">
+            <i class="bi bi-arrow-left me-1"></i>প্রশ্নব্যাংকে ফিরে যান
+        </a>
+    </div>
+    <div class="d-flex align-items-center gap-2">
+        <span class="badge bg-primary px-3 py-2" style="font-size:12px;">মোট প্রশ্ন: @grandTotal টি</span>
+        <span class="badge bg-success px-3 py-2" style="font-size:12px;">সমাধানকৃত: @grandSolved টি (@overallProgress%)</span>
+    </div>
+</div>
+
+<div class="summary-card">
+    <div class="summary-header">
+        <div>
+            <h6 class="mb-0 fw-bold">SUMMARY — QUESTIONS PER TOPIC</h6>
+            <small class="text-muted">Combined Bank & Bangladesh Bank Exams | 2020 – 2026 | Total Questions: @grandTotal | Topics: 14</small>
+        </div>
+    </div>
+    <div class="table-responsive">
+        <table class="summary-table">
+            <thead>
+                <tr>
+                    <th style="width: 60px;">Rank</th>
+                    <th>Topic / Category</th>
+                    <th style="text-align: right; width: 120px;">Questions</th>
+                    <th style="text-align: right; width: 100px;">%</th>
+                    <th style="width: 180px;">Priority Level</th>
+                    <th style="width: 160px;">Progress</th>
+                    <th style="text-align: center; width: 100px;">Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var row in Model.OrderBy(m => m.Order))
+                {
+                    <tr>
+                        <td class="fw-bold text-muted">@row.Order</td>
+                        <td>
+                            <div class="d-flex align-items-center gap-2">
+                                <i class="bi @row.Icon text-primary" style="font-size:16px;"></i>
+                                <span class="fw-semibold text-dark">@row.Category</span>
+                            </div>
+                        </td>
+                        <td style="text-align: right;" class="fw-bold">@row.TotalQuestions</td>
+                        <td style="text-align: right;" class="text-muted font-monospace">@row.Percentage</td>
+                        <td>
+                            <span class="priority-stars">@(new string('★', row.StarRating))</span>
+                            <span class="ms-1 fw-semibold small @(row.Priority == "Critical" ? "text-danger" : row.Priority == "High" ? "text-warning" : "text-secondary")">
+                                @row.Priority
+                            </span>
+                        </td>
+                        <td>
+                            <div class="d-flex align-items-center gap-2">
+                                <div class="progress flex-grow-1" style="height:6px;border-radius:3px;">
+                                    <div class="progress-bar bg-success" style="width:@(row.ProgressPercent)%"></div>
+                                </div>
+                                <span class="small fw-semibold text-muted" style="min-width:32px;">@row.ProgressPercent%</span>
+                            </div>
+                        </td>
+                        <td style="text-align: center;">
+                            <a asp-action="Index" asp-route-category="@row.Category" class="btn btn-sm btn-light border" style="font-size:11px;border-radius:6px;">
+                                প্রশ্ন দেখুন <i class="bi bi-arrow-right"></i>
+                            </a>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+            <tfoot>
+                <tr style="background:#f9fafb;font-weight:700;">
+                    <td colspan="2" class="text-uppercase">Total</td>
+                    <td style="text-align: right;">@grandTotal</td>
+                    <td style="text-align: right;">100%</td>
+                    <td colspan="3"></td>
+                </tr>
+            </tfoot>
+        </table>
+    </div>
+</div>
