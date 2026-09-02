@@ -1,0 +1,164 @@
+@model ITSoftware.Models.ViewModels.MockExamDetailedResultViewModel
+@{
+    ViewData["Title"] = "Mock Exam Result";
+    ViewData["Subtitle"] = Model.Result.ExamTitle;
+}
+
+<!-- Summary Score Card -->
+<div class="card border-0 shadow-sm mb-4" style="border-radius:16px;">
+    <div class="card-body p-4">
+        <div class="row align-items-center g-4">
+            <div class="col-md-4 text-center border-end">
+                <div style="width:90px;height:90px;border-radius:50%;margin:0 auto 12px;display:flex;align-items:center;justify-content:center;font-size:36px;background:@(Model.Result.IsPassed ? "var(--teal-lt)" : "#fee2e2");color:@(Model.Result.IsPassed ? "var(--teal)" : "#dc2626");">
+                    <i class="bi @(Model.Result.IsPassed ? "bi-trophy-fill" : "bi-x-circle-fill")"></i>
+                </div>
+                <h4 class="fw-bold mb-1 @(Model.Result.IsPassed ? "text-success" : "text-danger")">
+                    @(Model.Result.IsPassed ? "PASSED!" : "NEEDS PRACTICE")
+                </h4>
+                <div class="text-muted small">@Model.Result.ExamTitle</div>
+            </div>
+
+            <div class="col-md-8">
+                <div class="row g-3">
+                    <div class="col-6 col-md-3">
+                        <div class="p-3 text-center" style="background:var(--bg-subtle);border-radius:12px;">
+                            <div class="fw-bold font-monospace text-primary" style="font-size:22px;">@Model.Result.TotalScore</div>
+                            <small class="text-muted">অর্জিত স্কোর (@Model.Result.Percentage%)</small>
+                        </div>
+                    </div>
+                    <div class="col-6 col-md-3">
+                        <div class="p-3 text-center" style="background:var(--bg-subtle);border-radius:12px;">
+                            <div class="fw-bold font-monospace text-success" style="font-size:22px;">@Model.Result.CorrectCount</div>
+                            <small class="text-muted">সঠিক উত্তর</small>
+                        </div>
+                    </div>
+                    <div class="col-6 col-md-3">
+                        <div class="p-3 text-center" style="background:var(--bg-subtle);border-radius:12px;">
+                            <div class="fw-bold font-monospace text-danger" style="font-size:22px;">@Model.Result.WrongCount</div>
+                            <small class="text-muted">ভুল উত্তর (-@Model.Result.NegativeMarks)</small>
+                        </div>
+                    </div>
+                    <div class="col-6 col-md-3">
+                        <div class="p-3 text-center" style="background:var(--bg-subtle);border-radius:12px;">
+                            <div class="fw-bold font-monospace text-secondary" style="font-size:22px;">
+                                @(Model.Result.TimeTakenSeconds / 60)m @(Model.Result.TimeTakenSeconds % 60)s
+                            </div>
+                            <small class="text-muted">ব্যয়িত সময়</small>
+                        </div>
+                    </div>
+                </div>
+
+                @if (Model.Result.WrongCount > 0)
+                {
+                    <div class="alert alert-warning d-flex align-items-center justify-content-between p-3 mt-3 mb-0" style="border-radius:10px;font-size:12.5px;">
+                        <div>
+                            <i class="bi bi-info-circle-fill me-1"></i>
+                            ভুল হওয়া <strong>@Model.Result.WrongCount টি প্রশ্ন</strong> স্বয়ংক্রিয়ভাবে <strong>Mistake Bank</strong> এ যোগ হয়েছে।
+                        </div>
+                        <a asp-controller="Mcq" asp-action="MistakeBank" class="btn btn-sm btn-warning text-dark fw-semibold" style="border-radius:6px;font-size:11px;">
+                            Mistake Bank দেখুন <i class="bi bi-arrow-right"></i>
+                        </a>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Detailed Question-by-Question Review -->
+<div class="d-flex align-items-center justify-content-between mb-3">
+    <h5 class="fw-bold mb-0">পরীক্ষার বিস্তারিত প্রশ্ন ও সমাধান রিভিউ</h5>
+    <div class="d-flex align-items-center gap-2">
+        <a asp-action="Index" class="btn btn-sm btn-outline-primary" style="border-radius:8px;">
+            <i class="bi bi-arrow-repeat me-1"></i>আরেকটি মক টেস্ট দিন
+        </a>
+        <button type="button" class="btn btn-sm btn-outline-secondary" onclick="window.print()" style="border-radius:8px;">
+            <i class="bi bi-printer me-1"></i>প্রিন্ট / PDF
+        </button>
+    </div>
+</div>
+
+@if (Model.Reviews.Count > 0)
+{
+    @foreach (var r in Model.Reviews)
+    {
+        var q = r.Question;
+        <div class="card border-0 shadow-sm mb-3" style="border-radius:14px;border-left: 5px solid @(r.IsCorrect ? "var(--teal)" : r.IsUnattempted ? "var(--text-dim)" : "var(--coral)") !important;">
+            <div class="card-body p-4">
+                <div class="d-flex align-items-center justify-content-between mb-2">
+                    <span class="badge bg-secondary-subtle text-secondary fw-semibold px-2 py-1" style="font-size:11px;border-radius:6px;">
+                        প্রশ্ন #@r.Index
+                    </span>
+
+                    <div>
+                        @if (r.IsCorrect)
+                        {
+                            <span class="badge bg-success text-white px-2 py-1" style="font-size:11.5px;border-radius:6px;">
+                                <i class="bi bi-check-circle me-1"></i>সঠিক (+1.0)
+                            </span>
+                        }
+                        else if (r.IsUnattempted)
+                        {
+                            <span class="badge bg-secondary text-white px-2 py-1" style="font-size:11.5px;border-radius:6px;">
+                                <i class="bi bi-dash-circle me-1"></i>উত্তর দেওয়া হয়নি (0.0)
+                            </span>
+                        }
+                        else
+                        {
+                            <span class="badge bg-danger text-white px-2 py-1" style="font-size:11.5px;border-radius:6px;">
+                                <i class="bi bi-x-circle me-1"></i>ভুল উত্তর (-0.25)
+                            </span>
+                        }
+                    </div>
+                </div>
+
+                <h6 class="fw-semibold mb-3" style="font-size:14.5px;color:var(--text-main);">
+                    @q.QuestionText
+                </h6>
+
+                <!-- Options -->
+                <div class="row g-2 mb-3" style="font-size:13px;">
+                    <div class="col-md-6">
+                        <div class="p-2 px-3 border rounded-3 @(q.CorrectAnswer == "A" ? "border-success bg-success-subtle fw-semibold" : r.SelectedOption == "A" ? "border-danger bg-danger-subtle" : "")">
+                            <strong>A.</strong> @q.OptionA
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="p-2 px-3 border rounded-3 @(q.CorrectAnswer == "B" ? "border-success bg-success-subtle fw-semibold" : r.SelectedOption == "B" ? "border-danger bg-danger-subtle" : "")">
+                            <strong>B.</strong> @q.OptionB
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="p-2 px-3 border rounded-3 @(q.CorrectAnswer == "C" ? "border-success bg-success-subtle fw-semibold" : r.SelectedOption == "C" ? "border-danger bg-danger-subtle" : "")">
+                            <strong>C.</strong> @q.OptionC
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="p-2 px-3 border rounded-3 @(q.CorrectAnswer == "D" ? "border-success bg-success-subtle fw-semibold" : r.SelectedOption == "D" ? "border-danger bg-danger-subtle" : "")">
+                            <strong>D.</strong> @q.OptionD
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Correct Answer & Explanation -->
+                <div class="p-3" style="background:var(--bg-subtle);border-radius:10px;font-size:12.5px;">
+                    <div class="d-flex align-items-center gap-2 mb-1">
+                        <strong class="text-success">
+                            <i class="bi bi-check2-circle me-1"></i>সঠিক উত্তর: @q.CorrectAnswer
+                        </strong>
+                        @if (!string.IsNullOrEmpty(r.SelectedOption))
+                        {
+                            <span class="text-muted">| আপনার উত্তর: <strong>@r.SelectedOption</strong></span>
+                        }
+                    </div>
+                    @if (!string.IsNullOrEmpty(q.Explanation))
+                    {
+                        <div class="text-muted mt-1">
+                            <strong>ব্যাখ্যা:</strong> @q.Explanation
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    }
+}

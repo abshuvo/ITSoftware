@@ -1,176 +1,262 @@
-﻿@model ITSoftware.Models.ViewModels.McqIndexViewModel
+@model ITSoftware.Models.ViewModels.McqIndexViewModel
 @{
-    ViewData["Title"] = "Technical MCQ";
-    ViewData["Subtitle"] = "MCQ practice এবং import";
+    ViewData["Title"] = "Technical MCQ & Concept Bank";
+    ViewData["Subtitle"] = "ব্যাংক আইটি ও টেকনিক্যাল পরীক্ষার প্রস্তুতি ও কুইজ";
 }
 
 @section Styles {
     <style>
-        .tab-btn {
-            padding: 7px 18px;
-            border-radius: 8px;
-            font-size: 13px;
-            border: 1px solid #e8e7e2;
+        .mcq-container {
+            display: grid;
+            grid-template-columns: 300px 1fr;
+            gap: 22px;
+            align-items: start;
+        }
+
+        @@media (max-width: 992px) {
+            .mcq-container {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* ── Sidebar Topic Explorer ── */
+        .topic-sidebar-card {
             background: #fff;
-            color: #555;
-            cursor: pointer;
-            transition: all .15s;
-        }
-
-            .tab-btn.active, .tab-btn:hover {
-                background: var(--primary-lt);
-                color: var(--primary);
-                border-color: var(--primary-md);
-                font-weight: 600;
-            }
-
-        .tab-content {
-            display: none;
-        }
-
-            .tab-content.active {
-                display: block;
-            }
-
-        .mcq-card {
-            background: #fff;
-            border: 1px solid #e8e7e2;
-            border-radius: 10px;
-            padding: 14px 16px;
-            transition: box-shadow .15s;
-        }
-
-            .mcq-card:hover {
-                box-shadow: 0 3px 10px rgba(0,0,0,.06);
-            }
-
-        .mcq-question {
-            font-size: 13px;
-            font-weight: 600;
-            color: #1a1a1a;
-            margin-bottom: 8px;
-        }
-
-        .mcq-options {
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.03);
+            position: sticky;
+            top: 20px;
+            max-height: calc(100vh - 40px);
             display: flex;
-            flex-wrap: wrap;
-            gap: 6px;
-            margin-bottom: 8px;
-        }
-
-        .mcq-opt-pill {
-            font-size: 12px;
-            padding: 3px 10px;
-            border-radius: 6px;
-            background: #f5f5f3;
-            border: 1px solid #e8e7e2;
-            color: #555;
-        }
-
-            .mcq-opt-pill.correct {
-                background: var(--teal-lt);
-                border-color: #5DCAA5;
-                color: #085041;
-                font-weight: 600;
-            }
-
-        .cat-chip {
-            display: inline-block;
-            font-size: 11px;
-            padding: 3px 10px;
-            border-radius: 20px;
-            background: var(--primary-lt);
-            color: var(--primary);
-            border: 1px solid var(--primary-md);
-            cursor: pointer;
-            transition: all .15s;
-            text-decoration: none;
-        }
-
-            .cat-chip:hover, .cat-chip.active {
-                background: var(--primary);
-                color: #fff;
-            }
-
-        .quiz-start-card {
-            background: linear-gradient(135deg, #534AB7 0%, #7F77DD 100%);
-            border-radius: 14px;
-            padding: 28px 24px;
-            color: #fff;
-            text-align: center;
-        }
-
-            .quiz-start-card h5 {
-                font-size: 18px;
-                font-weight: 700;
-                margin-bottom: 6px;
-            }
-
-            .quiz-start-card p {
-                font-size: 13px;
-                opacity: .85;
-                margin-bottom: 20px;
-            }
-
-        .btn-quiz-start {
-            display: inline-block;
-            padding: 10px 28px;
-            background: #fff;
-            color: var(--primary);
-            border-radius: 8px;
-            font-weight: 700;
-            font-size: 14px;
-            text-decoration: none;
-            transition: opacity .15s;
-        }
-
-            .btn-quiz-start:hover {
-                opacity: .9;
-                color: var(--primary);
-            }
-
-        .csv-format-box {
-            background: #1a1a2e;
-            color: #a8f0a8;
-            border-radius: 8px;
-            padding: 14px 16px;
-            font-size: 12px;
-            font-family: 'Courier New', monospace;
-            overflow-x: auto;
-            margin-top: 10px;
-        }
-
-
-
-        media (max-width: 768px) {
-            /* Two column → single column */
-            .row .col-12.col-lg-4, .row .col-12.col-lg-8
-
-        {
-            margin-bottom: 16px;
-        }
-
-        /* File card actions wrap */
-        .file-card {
             flex-direction: column;
-            align-items: flex-start;
-            gap: 10px;
         }
 
-        .file-actions {
-            display: flex;
-            gap: 8px;
-            flex-wrap: wrap;
+        .topic-sidebar-header {
+            padding: 14px 16px;
+            background: #f8fafc;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        .topic-search-input {
+            font-size: 12px;
+            border-radius: 6px;
+            border: 1px solid #cbd5e1;
+            padding: 5px 10px;
             width: 100%;
         }
 
-        .btn-view,
-        .btn-delete {
+        .topic-scroll-list {
+            overflow-y: auto;
             flex: 1;
-            text-align: center;
-            justify-content: center;
+            padding: 8px 0;
         }
 
+        .topic-group-title {
+            padding: 8px 16px;
+            font-size: 12.5px;
+            font-weight: 700;
+            color: #1e293b;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            cursor: pointer;
+            user-select: none;
+            transition: background .12s;
+        }
+
+        .topic-group-title:hover {
+            background: #f1f5f9;
+        }
+
+        .topic-group-title.active-cat {
+            background: #eff6ff;
+            color: #1d4ed8;
+        }
+
+        .subtopic-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 5px 16px 5px 32px;
+            font-size: 12px;
+            color: #475569;
+            text-decoration: none;
+            transition: all .12s;
+            border-left: 3px solid transparent;
+        }
+
+        .subtopic-item:hover {
+            color: #0f172a;
+            background: #f8fafc;
+        }
+
+        .subtopic-item.active {
+            background: #eff6ff;
+            color: #1d4ed8;
+            font-weight: 600;
+            border-left-color: #2563eb;
+        }
+
+        .count-pill {
+            font-size: 10.5px;
+            font-weight: 600;
+            padding: 1px 7px;
+            border-radius: 10px;
+            background: #f1f5f9;
+            color: #64748b;
+        }
+
+        .active .count-pill, .active-cat .count-pill {
+            background: #dbeafe;
+            color: #1e40af;
+        }
+
+        /* ── Action Toolbar ── */
+        .feed-header-card {
+            background: #fff;
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            padding: 14px 18px;
+            margin-bottom: 16px;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.03);
+        }
+
+        .btn-quiz-cta {
+            background: linear-gradient(135deg, #4f46e5 0%, #6366f1 100%);
+            color: #fff;
+            font-size: 13px;
+            font-weight: 600;
+            padding: 7px 18px;
+            border-radius: 8px;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            transition: transform .15s, box-shadow .15s;
+            box-shadow: 0 2px 8px rgba(79, 70, 229, 0.25);
+        }
+
+        .btn-quiz-cta:hover {
+            color: #fff;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(79, 70, 229, 0.35);
+        }
+
+        /* ── MCQ Direct-Answer Card ── */
+        .q-card {
+            background: #fff;
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            padding: 16px 18px;
+            margin-bottom: 12px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.02);
+            transition: border-color .15s, box-shadow .15s;
+        }
+
+        .q-card:hover {
+            border-color: #cbd5e1;
+            box-shadow: 0 3px 10px rgba(0,0,0,0.04);
+        }
+
+        .q-number-badge {
+            font-size: 11px;
+            font-weight: 700;
+            padding: 2px 7px;
+            border-radius: 5px;
+            background: #f1f5f9;
+            color: #475569;
+        }
+
+        .q-cat-tag {
+            font-size: 11px;
+            font-weight: 600;
+            padding: 2px 8px;
+            border-radius: 5px;
+            background: #eff6ff;
+            color: #1e40af;
+        }
+
+        .q-subcat-tag {
+            font-size: 11px;
+            font-weight: 600;
+            padding: 2px 8px;
+            border-radius: 5px;
+            background: #f0fdf4;
+            color: #166534;
+        }
+
+        .q-text {
+            font-size: 14.5px;
+            font-weight: 600;
+            color: #0f172a;
+            line-height: 1.55;
+            margin: 8px 0 10px 0;
+            white-space: pre-line;
+        }
+
+        /* ── 1-Line Direct Answer ── */
+        .ans-line {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: #f0fdf4;
+            border: 1px solid #bbf7d0;
+            padding: 8px 12px;
+            border-radius: 8px;
+            font-size: 13px;
+            color: #15803d;
+        }
+
+        .ans-label {
+            font-weight: 700;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            color: #166534;
+        }
+
+        .ans-content {
+            font-weight: 600;
+            color: #0f172a;
+        }
+
+        .peek-options {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 6px;
+            padding: 8px 10px;
+            background: #f8fafc;
+            border-radius: 6px;
+            border: 1px solid #e2e8f0;
+            font-size: 12px;
+        }
+
+        .peek-opt-pill {
+            padding: 4px 8px;
+            border-radius: 4px;
+            background: #fff;
+            border: 1px solid #cbd5e1;
+            color: #475569;
+        }
+
+        .peek-opt-pill.correct {
+            background: #dcfce7;
+            border-color: #86efac;
+            color: #15803d;
+            font-weight: 600;
+        }
+
+        .q-note {
+            font-size: 12px;
+            color: #475569;
+            background: #f8fafc;
+            border-left: 3px solid #6366f1;
+            padding: 6px 12px;
+            border-radius: 4px;
+            margin-top: 8px;
+            line-height: 1.5;
         }
     </style>
 }
@@ -178,269 +264,396 @@
 <!-- Alerts -->
 @if (TempData["Success"] != null)
 {
-    <div class="alert mb-3"
-         style="background:#E1F5EE;border:1px solid #5DCAA5;
-                    border-radius:10px;color:#085041;font-size:13px;">
-        <i class="bi bi-check-circle-fill me-1"></i>@TempData["Success"]
+    <div class="alert alert-dismissible fade show mb-3" style="background:#ecfdf5;border:1px solid #a7f3d0;color:#065f46;border-radius:8px;font-size:13px;">
+        <i class="bi bi-check-circle-fill me-2"></i>@TempData["Success"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
     </div>
 }
 @if (TempData["Error"] != null)
 {
-    <div class="alert mb-3"
-         style="background:#FAECE7;border:1px solid #F0997B;
-                    border-radius:10px;color:#712B13;font-size:13px;">
-        <i class="bi bi-exclamation-circle-fill me-1"></i>@TempData["Error"]
+    <div class="alert alert-dismissible fade show mb-3" style="background:#fff1f2;border:1px solid #fecdd3;color:#9f1239;border-radius:8px;font-size:13px;">
+        <i class="bi bi-exclamation-circle-fill me-2"></i>@TempData["Error"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
     </div>
 }
 
-<div class="row g-4">
+<div class="mcq-container">
 
-    <!-- ══ Left column ══ -->
-    <div class="col-12 col-lg-4">
+    <!-- ══ LEFT: Clean Hierarchical Topic Sidebar ══ -->
+    <aside class="topic-sidebar-card">
+        <div class="topic-sidebar-header">
+            <div class="d-flex align-items-center justify-content-between mb-2">
+                <span class="fw-bold fs-6 text-dark">
+                    <i class="bi bi-diagram-3-fill text-primary me-1"></i>টপিক সিলেবাস
+                </span>
+                <span class="badge bg-primary rounded-pill" style="font-size:11px;">
+                    @Model.TotalCount টি
+                </span>
+            </div>
+            <input type="text" id="topicSearchBox" class="topic-search-input" placeholder="টপিক বা সাব-টপিক খুঁজুন..." onkeyup="filterTopicTree(this.value)" />
+        </div>
 
-        <!-- Quiz start card -->
-        <div class="quiz-start-card mb-3">
-            <h5><i class="bi bi-play-circle me-1"></i>Quiz Mode</h5>
-            <p>সব MCQ shuffle করে quiz শুরু করো</p>
-            <a asp-action="StartQuiz" asp-controller="Mcq"
-               class="btn-quiz-start">
-                <i class="bi bi-play-fill me-1"></i>Quiz শুরু করো
+        <div class="topic-scroll-list">
+            <!-- All Topics Option -->
+            <a asp-action="Index" class="subtopic-item @(string.IsNullOrEmpty(Model.FilterCategory) ? "active" : "")" style="padding-left:16px; font-weight:600;">
+                <span><i class="bi bi-grid-fill me-2 text-muted"></i>সব টপিক একনজরে</span>
+                <span class="count-pill">@Model.TotalCount</span>
             </a>
-            @if (Model.Categories.Any())
+
+            <!-- Hierarchical Categories & Subtopics -->
+            @foreach (var cat in Model.CategoryTree)
             {
-                <div style="margin-top:12px; font-size:12px; opacity:.8;">
-                    অথবা category অনুযায়ী:
-                </div>
-                <div style="margin-top:6px; display:flex; flex-wrap:wrap;
-                                gap:6px; justify-content:center;">
-                    @foreach (var cat in Model.Categories)
-                    {
-                        <a asp-action="StartQuiz" asp-controller="Mcq"
-                           asp-route-category="@cat"
-                           style="font-size:11px; padding:4px 10px; border-radius:6px;
-                                          background:rgba(255,255,255,.2); color:#fff;
-                                          text-decoration:none; border:1px solid rgba(255,255,255,.3);">
-                            @cat
+                var isCatActive = Model.FilterCategory == cat.CategoryName;
+                <div class="topic-group" data-topic-name="@cat.CategoryName.ToLower()">
+                    <div class="topic-group-title @(isCatActive ? "active-cat" : "")" onclick="toggleSubtopics(this)">
+                        <a asp-action="Index" asp-route-category="@cat.CategoryName" class="text-decoration-none text-reset flex-grow-1">
+                            <i class="bi @(isCatActive ? "bi-folder2-open text-primary" : "bi-folder2 text-muted") me-1"></i>
+                            <span>@cat.CategoryName</span>
                         </a>
-                    }
-                </div>
-            }
-        </div>
-
-        <!-- Tabs: Import / Add manually -->
-        <div style="background:#fff;border:1px solid #e8e7e2;border-radius:12px;overflow:hidden;">
-            <div style="padding:14px 16px;border-bottom:1px solid #f0f0ee;">
-                <div class="d-flex gap-2">
-                    <button class="tab-btn active" onclick="switchTab('import', this)">
-                        <i class="bi bi-file-earmark-arrow-up me-1"></i>CSV Import
-                    </button>
-                    <button class="tab-btn" onclick="switchTab('manual', this)">
-                        <i class="bi bi-plus-circle me-1"></i>Manual Add
-                    </button>
-                </div>
-            </div>
-            <div style="padding:16px;">
-
-                <!-- Tab 1: CSV Import -->
-                <div class="tab-content active" id="tab-import">
-                    <form asp-action="Import" asp-controller="Mcq"
-                          method="post" enctype="multipart/form-data">
-                        @Html.AntiForgeryToken()
-                        <div class="mb-3">
-                            <label style="font-size:12px;font-weight:600;
-                                          color:#555;margin-bottom:4px;display:block;">
-                                CSV File Select করো
-                            </label>
-                            <input type="file" name="file" accept=".csv"
-                                   class="form-control form-control-sm"
-                                   style="border-radius:8px;font-size:12px;" />
+                        <div class="d-flex align-items-center gap-1">
+                            <span class="count-pill">@cat.TotalCount</span>
+                            <i class="bi bi-chevron-down text-muted chevron-arrow" style="font-size:10px; transition:transform .2s; transform:@(isCatActive ? "rotate(0deg)" : "rotate(-90deg)");"></i>
                         </div>
-                        <button type="submit"
-                                style="width:100%;padding:9px;border-radius:8px;
-                                       background:var(--primary);color:#fff;border:none;
-                                       font-size:13px;font-weight:600;cursor:pointer;">
-                            <i class="bi bi-upload me-1"></i>Import করো
-                        </button>
-                    </form>
-
-                    <!-- CSV format guide -->
-                    <div style="margin-top:14px;">
-                        <div style="font-size:12px;font-weight:600;color:#555;">
-                            CSV Format:
-                        </div>
-                        <div class="csv-format-box">
-                            Question,OptionA,OptionB,OptionC,OptionD,Answer,Explanation,Category<br />
-                            "Stack uses LIFO?","True","False","Maybe","None","A","LIFO = Last In First Out","DSA"
-                        </div>
-                        <a href="#" onclick="downloadSample()"
-                           style="font-size:11px;color:var(--primary);
-                                  text-decoration:none;display:block;margin-top:6px;">
-                            <i class="bi bi-download me-1"></i>Sample CSV download করো
-                        </a>
                     </div>
-                </div>
 
-                <!-- Tab 2: Manual Add -->
-                <div class="tab-content" id="tab-manual">
-                    <form asp-action="Add" asp-controller="Mcq" method="post">
-                        @Html.AntiForgeryToken()
-                        <div class="mb-2">
-                            <label style="font-size:12px;font-weight:600;
-                                          color:#555;margin-bottom:3px;display:block;">
-                                Question <span style="color:red;">*</span>
-                            </label>
-                            <textarea name="QuestionText" rows="2" required
-                                      class="form-control form-control-sm"
-                                      placeholder="প্রশ্নটি লিখো..."
-                                      style="border-radius:8px;font-size:13px;resize:none;">
-                            </textarea>
-                        </div>
-                        @foreach (var opt in new[] { "A", "B", "C", "D" })
+                    <div class="subtopics-wrap @(isCatActive ? "" : "d-none")">
+                        @foreach (var sub in cat.SubCategories)
                         {
-                            <div class="mb-2">
-                                <input type="text" name="Option@opt"
-                                       placeholder="Option @opt"
-                                       required
-                                       class="form-control form-control-sm"
-                                       style="border-radius:8px;font-size:12px;" />
-                            </div>
-                        }
-                        <div class="mb-2">
-                            <select name="CorrectAnswer" required
-                                    class="form-select form-select-sm"
-                                    style="border-radius:8px;font-size:12px;">
-                                <option value="">সঠিক উত্তর বেছে নাও</option>
-                                <option value="A">A</option>
-                                <option value="B">B</option>
-                                <option value="C">C</option>
-                                <option value="D">D</option>
-                            </select>
-                        </div>
-                        <div class="mb-2">
-                            <input type="text" name="Category"
-                                   placeholder="Category (যেমন: DSA, Network)"
-                                   class="form-control form-control-sm"
-                                   style="border-radius:8px;font-size:12px;" />
-                        </div>
-                        <div class="mb-3">
-                            <textarea name="Explanation" rows="2"
-                                      class="form-control form-control-sm"
-                                      placeholder="Explanation (ঐচ্ছিক)..."
-                                      style="border-radius:8px;font-size:12px;resize:none;">
-                            </textarea>
-                        </div>
-                        <button type="submit"
-                                style="width:100%;padding:9px;border-radius:8px;
-                                       background:var(--teal);color:#fff;border:none;
-                                       font-size:13px;font-weight:600;cursor:pointer;">
-                            <i class="bi bi-plus-circle me-1"></i>MCQ যোগ করো
-                        </button>
-                    </form>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- ══ Right column — MCQ list ══ -->
-    <div class="col-12 col-lg-8">
-        <div style="background:#fff;border:1px solid #e8e7e2;
-                    border-radius:12px;overflow:hidden;">
-            <div style="padding:14px 18px;border-bottom:1px solid #f0f0ee;">
-                <div class="d-flex align-items-center justify-content-between flex-wrap gap-2">
-                    <span style="font-size:13px;font-weight:600;">
-                        <i class="bi bi-list-ul me-1" style="color:var(--primary);"></i>
-                        সব MCQ
-                        <span style="font-size:12px;background:#EEEDFE;color:#534AB7;
-                                     padding:2px 8px;border-radius:20px;
-                                     margin-left:4px;font-weight:600;">
-                            @Model.TotalCount টি
-                        </span>
-                    </span>
-                    <!-- Category filter -->
-                    <div class="d-flex flex-wrap gap-1">
-                        <a asp-action="Index" class="cat-chip @(Model.FilterCategory == null ? "active" : "")">
-                            সব
-                        </a>
-                        @foreach (var cat in Model.Categories)
-                        {
-                            <a asp-action="Index" asp-route-category="@cat"
-                               class="cat-chip @(Model.FilterCategory == cat ? "active" : "")">
-                                @cat
+                            var isSubActive = isCatActive && Model.FilterSubCategory == sub.SubCategoryName;
+                            <a asp-action="Index" asp-route-category="@cat.CategoryName" asp-route-subCategory="@sub.SubCategoryName"
+                               class="subtopic-item @(isSubActive ? "active" : "")"
+                               data-subtopic-name="@sub.SubCategoryName.ToLower()">
+                                <span class="text-truncate" title="@sub.SubCategoryName">@sub.SubCategoryName</span>
+                                <span class="count-pill">@sub.Count</span>
                             </a>
                         }
                     </div>
                 </div>
-            </div>
+            }
+        </div>
 
-            <div style="padding:16px;">
-                @if (!Model.Questions.Any())
-                {
-                    <div style="text-align:center;padding:50px 20px;color:#aaa;">
-                        <i class="bi bi-question-circle"
-                           style="font-size:40px;display:block;margin-bottom:10px;"></i>
-                        <p style="font-size:13px;">
-                            এখনো কোনো MCQ নেই।<br />CSV import অথবা manually যোগ করো।
-                        </p>
-                    </div>
-                }
-                else
-                {
-                    <div class="d-flex flex-column gap-3">
-                        @foreach (var q in Model.Questions)
+        <!-- Sidebar Bottom Actions -->
+        <div style="padding:10px 14px; background:#f8fafc; border-top:1px solid #e2e8f0;" class="d-flex justify-content-between align-items-center">
+            <button class="btn btn-sm btn-outline-secondary" style="font-size:11.5px;" data-bs-toggle="modal" data-bs-target="#addImportModal">
+                <i class="bi bi-plus-circle me-1"></i>যোগ / CSV
+            </button>
+            <form asp-action="ResetData" method="post" onsubmit="return confirm('সম্পূর্ণ প্রশ্নব্যাংক নতুনভাবে রিলোড করতে চান?')">
+                @Html.AntiForgeryToken()
+                <button type="submit" class="btn btn-sm btn-link text-muted p-0" style="font-size:11.5px; text-decoration:none;" title="রিলোড সিলেবাস">
+                    <i class="bi bi-arrow-clockwise"></i> রিসেট
+                </button>
+            </form>
+        </div>
+    </aside>
+
+    <!-- ══ RIGHT: Main Q&A Digest Feed ══ -->
+    <main>
+        <!-- Header & Action Bar -->
+        <div class="feed-header-card">
+            <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-2">
+                <div>
+                    <!-- Breadcrumbs -->
+                    <div style="font-size:11.5px; color:#64748b;" class="mb-1">
+                        <span>টেকনিক্যাল প্রশ্নব্যাংক</span>
+                        @if (!string.IsNullOrEmpty(Model.FilterCategory))
                         {
-                            <div class="mcq-card">
-                                <div class="mcq-question">@q.QuestionText</div>
-                                <div class="mcq-options">
-                                    @foreach (var (opt, label) in new[]
-                                                                {
-                                                        (q.OptionA,"A"),(q.OptionB,"B"),
-                                                        (q.OptionC,"C"),(q.OptionD,"D")
-                                                        })
-                                    {
-                                        <span class="mcq-opt-pill @(label == q.CorrectAnswer ? "correct" : "")">
-                                            @label. @opt
-                                            @if (label == q.CorrectAnswer)
-                                            {
-                                                <i class="bi bi-check2 ms-1"></i>
-                                            }
-                                        </span>
-                                    }
-                                </div>
-                                <div class="d-flex align-items-center justify-content-between">
-                                    <div>
-                                        @if (!string.IsNullOrEmpty(q.Category))
-                                        {
-                                            <span style="font-size:11px;background:var(--primary-lt);
-                                                                     color:var(--primary);padding:2px 8px;
-                                                                     border-radius:10px;">
-                                                @q.Category
-                                            </span>
-                                        }
-                                        @if (!string.IsNullOrEmpty(q.Explanation))
-                                        {
-                                            <span style="font-size:11px;color:#888;margin-left:6px;">
-                                                <i class="bi bi-info-circle me-1"></i>@q.Explanation
-                                            </span>
-                                        }
-                                    </div>
-                                    <form asp-action="Delete" asp-controller="Mcq"
-                                          method="post"
-                                          onsubmit="return confirm('Delete করবে?')">
-                                        @Html.AntiForgeryToken()
-                                        <input type="hidden" name="id" value="@q.Id" />
-                                        <button type="submit"
-                                                style="font-size:11px;padding:4px 10px;
-                                                               border-radius:6px;background:#FAECE7;
-                                                               color:#993C1D;border:1px solid #F0997B;
-                                                               cursor:pointer;">
-                                            <i class="bi bi-trash"></i>
-                                        </button>
-                                    </form>
-                                </div>
-                            </div>
+                            <span class="mx-1">›</span>
+                            <span class="fw-semibold text-dark">@Model.FilterCategory</span>
+                        }
+                        @if (!string.IsNullOrEmpty(Model.FilterSubCategory))
+                        {
+                            <span class="mx-1">›</span>
+                            <span class="fw-semibold text-primary">@Model.FilterSubCategory</span>
                         }
                     </div>
-                }
+                    <div class="fw-bold text-dark fs-6">
+                        @(string.IsNullOrEmpty(Model.FilterSubCategory) ? (string.IsNullOrEmpty(Model.FilterCategory) ? "সকল টেকনিক্যাল প্রশ্ন ও উত্তর" : Model.FilterCategory) : Model.FilterSubCategory)
+                    </div>
+                </div>
+
+                <!-- Launch Quiz for this Topic -->
+                <div>
+                    <a asp-action="StartQuiz" asp-controller="Mcq"
+                       asp-route-category="@Model.FilterCategory"
+                       asp-route-subCategory="@Model.FilterSubCategory"
+                       class="btn-quiz-cta">
+                        <i class="bi bi-play-circle-fill fs-6"></i>
+                        <span>কুইজ মোড চালু করুন (@Model.FilteredCount টি)</span>
+                    </a>
+                </div>
+            </div>
+
+            <!-- Search & Filter info -->
+            <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 pt-2 border-top">
+                <div class="text-muted small">
+                    দেখানো হচ্ছে <strong>@Model.StartItemIndex–@Model.EndItemIndex</strong> (মোট <strong>@Model.FilteredCount</strong> টির মধ্যে)
+                </div>
+
+                <form method="get" class="d-flex gap-2" style="max-width: 340px; flex:1;">
+                    <input type="hidden" name="category" value="@Model.FilterCategory" />
+                    <input type="hidden" name="subCategory" value="@Model.FilterSubCategory" />
+                    <input type="hidden" name="pageSize" value="@Model.PageSize" />
+                    <div class="input-group input-group-sm">
+                        <input type="text" name="search" value="@Model.SearchQuery" class="form-control" placeholder="প্রশ্ন বা বিষয়ের নাম খুঁজুন..." />
+                        @if (!string.IsNullOrEmpty(Model.SearchQuery))
+                        {
+                            <a asp-action="Index" asp-route-category="@Model.FilterCategory" asp-route-subCategory="@Model.FilterSubCategory" asp-route-pageSize="@Model.PageSize" class="btn btn-outline-secondary">
+                                <i class="bi bi-x"></i>
+                            </a>
+                        }
+                        <button class="btn btn-primary" type="submit"><i class="bi bi-search"></i></button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Question List (Clean 1-Line Answer Digest) -->
+        @if (!Model.Questions.Any())
+        {
+            <div class="card border-0 shadow-sm text-center p-5" style="border-radius:12px; background:#fff;">
+                <i class="bi bi-inbox text-muted" style="font-size:44px;"></i>
+                <h6 class="fw-bold mt-2 text-dark">কোনো প্রশ্ন পাওয়া যায়নি!</h6>
+                <p class="small text-muted mb-3">বর্তমান ফিল্টার বা সার্চ কোয়েরিতে কোনো প্রশ্ন মেলেনি।</p>
+                <div>
+                    <a asp-action="Index" class="btn btn-sm btn-outline-primary">সকল প্রশ্ন দেখুন</a>
+                </div>
+            </div>
+        }
+        else
+        {
+            @for (int i = 0; i < Model.Questions.Count; i++)
+            {
+                var q = Model.Questions[i];
+                <div class="q-card">
+                    <!-- Top tags row -->
+                    <div class="d-flex align-items-center justify-content-between gap-2 flex-wrap mb-1">
+                        <div class="d-flex align-items-center gap-1 flex-wrap">
+                            <span class="q-number-badge">#@(Model.StartItemIndex + i)</span>
+                            @if (!string.IsNullOrEmpty(q.Category))
+                            {
+                                <span class="q-cat-tag">@q.Category</span>
+                            }
+                            @if (!string.IsNullOrEmpty(q.SubCategory))
+                            {
+                                <span class="q-subcat-tag">› @q.SubCategory</span>
+                            }
+                            @if (!string.IsNullOrEmpty(q.Tag))
+                            {
+                                <span class="badge bg-white text-dark border fw-normal" style="font-size:11px; padding: 2px 6px;">@q.Tag</span>
+                            }
+                        </div>
+                        <div class="d-flex align-items-center gap-2">
+                            <button type="button" class="btn btn-sm btn-link p-0 text-decoration-none" onclick="toggleMcqBookmarkAjax(@q.Id, this)" title="বুকমার্ক করুন">
+                                <i class="bi @(q.IsBookmarked ? "bi-star-fill text-warning" : "bi-star text-muted")" style="font-size:14px;"></i>
+                            </button>
+                            <form asp-action="Delete" asp-controller="Mcq" method="post" onsubmit="return confirm('মুছে ফেলতে চান?')" class="m-0">
+                                @Html.AntiForgeryToken()
+                                <input type="hidden" name="id" value="@q.Id" />
+                                <button type="submit" class="btn btn-sm btn-link text-muted p-0" title="মুছে ফেলুন" style="font-size:12px;">
+                                    <i class="bi bi-trash"></i>
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+
+                    <!-- Question -->
+                    <div class="q-text">@q.QuestionText</div>
+
+                    <!-- 1-Line Direct Answer Box -->
+                    <div class="ans-line">
+                        <span class="ans-label"><i class="bi bi-check-circle-fill"></i> উত্তর:</span>
+                        <span class="ans-content">(@q.CorrectAnswer) @q.CorrectOptionText</span>
+                        <button class="btn btn-sm btn-link text-muted ms-auto p-0 text-decoration-none" style="font-size:11px;" onclick="toggleOptions(@q.Id, this)">
+                            <i class="bi bi-eye"></i> অপশন দেখুন
+                        </button>
+                    </div>
+
+                    <!-- Collapsed Options Peek (expanded only on click) -->
+                    <div id="opts-@q.Id" class="peek-options d-none mt-2">
+                        <div class="peek-opt-pill @(q.CorrectAnswer == "A" ? "correct" : "")">
+                            <strong>A.</strong> @q.OptionA @(q.CorrectAnswer == "A" ? "✓" : "")
+                        </div>
+                        <div class="peek-opt-pill @(q.CorrectAnswer == "B" ? "correct" : "")">
+                            <strong>B.</strong> @q.OptionB @(q.CorrectAnswer == "B" ? "✓" : "")
+                        </div>
+                        <div class="peek-opt-pill @(q.CorrectAnswer == "C" ? "correct" : "")">
+                            <strong>C.</strong> @q.OptionC @(q.CorrectAnswer == "C" ? "✓" : "")
+                        </div>
+                        <div class="peek-opt-pill @(q.CorrectAnswer == "D" ? "correct" : "")">
+                            <strong>D.</strong> @q.OptionD @(q.CorrectAnswer == "D" ? "✓" : "")
+                        </div>
+                    </div>
+
+                    <!-- Explanation note -->
+                    @if (!string.IsNullOrEmpty(q.Explanation))
+                    {
+                        <div class="q-note">
+                            <i class="bi bi-info-circle-fill text-primary me-1"></i>
+                            <strong>ব্যাখ্যা / নোট:</strong> @q.Explanation
+                        </div>
+                    }
+                </div>
+            }
+
+            <!-- Pagination Bar -->
+            @if (Model.TotalPages > 1)
+            {
+                <div class="card border-0 shadow-sm mt-3" style="border-radius:12px; background:#fff;">
+                    <div class="card-body p-3 d-flex align-items-center justify-content-between flex-wrap gap-2">
+                        <div class="text-muted small">
+                            পৃষ্ঠা <strong>@Model.CurrentPage</strong> / <strong>@Model.TotalPages</strong>
+                        </div>
+
+                        <nav aria-label="Page navigation">
+                            <ul class="pagination pagination-sm mb-0">
+                                <!-- First -->
+                                <li class="page-item @(Model.CurrentPage == 1 ? "disabled" : "")">
+                                    <a class="page-link" asp-action="Index"
+                                       asp-route-category="@Model.FilterCategory"
+                                       asp-route-subCategory="@Model.FilterSubCategory"
+                                       asp-route-search="@Model.SearchQuery"
+                                       asp-route-page="1"
+                                       asp-route-pageSize="@Model.PageSize"><i class="bi bi-chevron-double-left"></i></a>
+                                </li>
+                                <!-- Prev -->
+                                <li class="page-item @(!Model.HasPreviousPage ? "disabled" : "")">
+                                    <a class="page-link" asp-action="Index"
+                                       asp-route-category="@Model.FilterCategory"
+                                       asp-route-subCategory="@Model.FilterSubCategory"
+                                       asp-route-search="@Model.SearchQuery"
+                                       asp-route-page="@(Model.CurrentPage - 1)"
+                                       asp-route-pageSize="@Model.PageSize"><i class="bi bi-chevron-left"></i></a>
+                                </li>
+
+                                @{
+                                    int startP = Math.Max(1, Model.CurrentPage - 2);
+                                    int endP = Math.Min(Model.TotalPages, Model.CurrentPage + 2);
+                                    for (int p = startP; p <= endP; p++)
+                                    {
+                                        <li class="page-item @(p == Model.CurrentPage ? "active" : "")">
+                                            <a class="page-link" asp-action="Index"
+                                               asp-route-category="@Model.FilterCategory"
+                                               asp-route-subCategory="@Model.FilterSubCategory"
+                                               asp-route-search="@Model.SearchQuery"
+                                               asp-route-page="@p"
+                                               asp-route-pageSize="@Model.PageSize">@p</a>
+                                        </li>
+                                    }
+                                }
+
+                                <!-- Next -->
+                                <li class="page-item @(!Model.HasNextPage ? "disabled" : "")">
+                                    <a class="page-link" asp-action="Index"
+                                       asp-route-category="@Model.FilterCategory"
+                                       asp-route-subCategory="@Model.FilterSubCategory"
+                                       asp-route-search="@Model.SearchQuery"
+                                       asp-route-page="@(Model.CurrentPage + 1)"
+                                       asp-route-pageSize="@Model.PageSize"><i class="bi bi-chevron-right"></i></a>
+                                </li>
+                                <!-- Last -->
+                                <li class="page-item @(Model.CurrentPage == Model.TotalPages ? "disabled" : "")">
+                                    <a class="page-link" asp-action="Index"
+                                       asp-route-category="@Model.FilterCategory"
+                                       asp-route-subCategory="@Model.FilterSubCategory"
+                                       asp-route-search="@Model.SearchQuery"
+                                       asp-route-page="@Model.TotalPages"
+                                       asp-route-pageSize="@Model.PageSize"><i class="bi bi-chevron-double-right"></i></a>
+                                </li>
+                            </ul>
+                        </nav>
+
+                        <!-- Per Page -->
+                        <div class="d-flex align-items-center gap-1">
+                            <span class="small text-muted">প্রতি পৃষ্ঠায়:</span>
+                            <select class="form-select form-select-sm" style="width: auto; font-size: 12px;"
+                                    onchange="location.href='@Url.Action("Index", new { category = Model.FilterCategory, subCategory = Model.FilterSubCategory, search = Model.SearchQuery, page = 1 })&pageSize=' + this.value;">
+                                <option value="15" selected="@(Model.PageSize == 15)">15</option>
+                                <option value="25" selected="@(Model.PageSize == 25)">25</option>
+                                <option value="50" selected="@(Model.PageSize == 50)">50</option>
+                                <option value="100" selected="@(Model.PageSize == 100)">100</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+            }
+        }
+    </main>
+</div>
+
+<!-- ══ Modal: Add or Import MCQ ══ -->
+<div class="modal fade" id="addImportModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content" style="border-radius:12px; border:none; box-shadow:0 10px 30px rgba(0,0,0,0.1);">
+            <div class="modal-header" style="border-bottom:1px solid #f1f5f9; padding:14px 20px;">
+                <h6 class="modal-title fw-bold"><i class="bi bi-plus-circle text-primary me-2"></i>MCQ যোগ অথবা ইম্পোর্ট</h6>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body p-3">
+                <ul class="nav nav-pills nav-fill mb-3" id="pills-tab" role="tablist">
+                    <li class="nav-item">
+                        <button class="nav-link active btn-sm" id="pills-add-tab" data-bs-toggle="pill" data-bs-target="#pills-add" type="button" style="font-size:12px;">ম্যানুয়াল যোগ</button>
+                    </li>
+                    <li class="nav-item">
+                        <button class="nav-link btn-sm" id="pills-import-tab" data-bs-toggle="pill" data-bs-target="#pills-import" type="button" style="font-size:12px;">CSV ইম্পোর্ট</button>
+                    </li>
+                </ul>
+                <div class="tab-content" id="pills-tabContent">
+                    <!-- Manual Add -->
+                    <div class="tab-pane fade show active" id="pills-add">
+                        <form asp-action="Add" asp-controller="Mcq" method="post">
+                            @Html.AntiForgeryToken()
+                            <div class="mb-2">
+                                <label class="form-label small fw-semibold mb-1">প্রশ্ন <span class="text-danger">*</span></label>
+                                <textarea name="QuestionText" rows="2" required class="form-control form-control-sm" placeholder="MCQ প্রশ্নটি লিখুন..."></textarea>
+                            </div>
+                            <div class="row g-2 mb-2">
+                                <div class="col-6"><input type="text" name="OptionA" placeholder="Option A" required class="form-control form-control-sm" /></div>
+                                <div class="col-6"><input type="text" name="OptionB" placeholder="Option B" required class="form-control form-control-sm" /></div>
+                                <div class="col-6"><input type="text" name="OptionC" placeholder="Option C" required class="form-control form-control-sm" /></div>
+                                <div class="col-6"><input type="text" name="OptionD" placeholder="Option D" required class="form-control form-control-sm" /></div>
+                            </div>
+                            <div class="row g-2 mb-2">
+                                <div class="col-6">
+                                    <select name="CorrectAnswer" required class="form-select form-select-sm">
+                                        <option value="">সঠিক উত্তর</option>
+                                        <option value="A">Option A</option>
+                                        <option value="B">Option B</option>
+                                        <option value="C">Option C</option>
+                                        <option value="D">Option D</option>
+                                    </select>
+                                </div>
+                                <div class="col-6">
+                                    <input type="text" name="Category" list="modalCatList" placeholder="ক্যাটাগরি" class="form-control form-control-sm" />
+                                    <datalist id="modalCatList">
+                                        @foreach (var c in Model.Categories)
+                                        {
+                                            <option value="@c"></option>
+                                        }
+                                    </datalist>
+                                </div>
+                            </div>
+                            <div class="mb-2">
+                                <input type="text" name="SubCategory" placeholder="সাব-ক্যাটাগরি (যেমন: CPU Scheduling)" class="form-control form-control-sm" />
+                            </div>
+                            <div class="mb-3">
+                                <textarea name="Explanation" rows="2" class="form-control form-control-sm" placeholder="ব্যাখ্যা বা নোট (ঐচ্ছিক)..."></textarea>
+                            </div>
+                            <button type="submit" class="btn btn-sm btn-primary w-100 fw-semibold">সংরক্ষণ করুন</button>
+                        </form>
+                    </div>
+
+                    <!-- CSV Import -->
+                    <div class="tab-pane fade" id="pills-import">
+                        <form asp-action="Import" asp-controller="Mcq" method="post" enctype="multipart/form-data">
+                            @Html.AntiForgeryToken()
+                            <div class="mb-3">
+                                <label class="form-label small fw-semibold text-muted mb-1">CSV ফাইল নির্বাচন করুন</label>
+                                <input type="file" name="file" accept=".csv" class="form-control form-control-sm" required />
+                            </div>
+                            <button type="submit" class="btn btn-sm btn-primary w-100 fw-semibold">ইম্পোর্ট করুন</button>
+                        </form>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
@@ -448,26 +661,74 @@
 
 @section Scripts {
     <script>
-            setSidebarProgress(0);
-
-            function switchTab(name, btn) {
-                document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
-                document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-                document.getElementById('tab-' + name).classList.add('active');
-                btn.classList.add('active');
+        function toggleOptions(id, btn) {
+            const el = document.getElementById('opts-' + id);
+            if (el.classList.contains('d-none')) {
+                el.classList.remove('d-none');
+                btn.innerHTML = '<i class="bi bi-eye-slash"></i> অপশন বন্ধ করুন';
+            } else {
+                el.classList.add('d-none');
+                btn.innerHTML = '<i class="bi bi-eye"></i> অপশন দেখুন';
             }
+        }
 
-            function downloadSample() {
-                const csv = `Question,OptionA,OptionB,OptionC,OptionD,CorrectAnswer,Explanation,Category
-        "Which data structure uses LIFO?","Stack","Queue","Array","Tree","A","Last In First Out","DSA"
-        "SQL SELECT statement does what?","Insert data","Delete data","Retrieve data","Update data","C","Basic SQL","Database"
-        "What does HTTP stand for?","HyperText Transfer Protocol","High Transfer Protocol","HyperText Transport Process","None","A","Web basics","Network"`;
-
-                const blob = new Blob([csv], { type: 'text/csv' });
-                const a    = document.createElement('a');
-                a.href     = URL.createObjectURL(blob);
-                a.download = 'mcq_sample.csv';
-                a.click();
+        function toggleSubtopics(titleEl) {
+            const wrap = titleEl.nextElementSibling;
+            const arrow = titleEl.querySelector('.chevron-arrow');
+            if (wrap.classList.contains('d-none')) {
+                wrap.classList.remove('d-none');
+                arrow.style.transform = 'rotate(0deg)';
+            } else {
+                wrap.classList.add('d-none');
+                arrow.style.transform = 'rotate(-90deg)';
             }
+        }
+
+        function filterTopicTree(query) {
+            const q = query.toLowerCase().trim();
+            const groups = document.querySelectorAll('.topic-group');
+            groups.forEach(group => {
+                const catName = group.getAttribute('data-topic-name') || '';
+                const subItems = group.querySelectorAll('.subtopic-item');
+                let catMatch = catName.includes(q);
+                let subMatch = false;
+
+                subItems.forEach(item => {
+                    const subName = item.getAttribute('data-subtopic-name') || '';
+                    if (q === '' || subName.includes(q) || catMatch) {
+                        item.style.display = 'flex';
+                        subMatch = true;
+                    } else {
+                        item.style.display = 'none';
+                    }
+                });
+
+                if (q === '' || catMatch || subMatch) {
+                    group.style.display = 'block';
+                    if (q !== '') {
+                        group.querySelector('.subtopics-wrap').classList.remove('d-none');
+                    }
+                } else {
+                    group.style.display = 'none';
+                }
+            });
+        }
+
+        async function toggleMcqBookmarkAjax(id, btn) {
+            try {
+                const res = await fetch(`/Bookmark/ToggleMcqBookmark?id=${id}`, { method: 'POST' });
+                const data = await res.json();
+                if (data.success) {
+                    const icon = btn.querySelector('i');
+                    if (data.isBookmarked) {
+                        icon.className = 'bi bi-star-fill text-warning';
+                    } else {
+                        icon.className = 'bi bi-star text-muted';
+                    }
+                }
+            } catch (err) {
+                console.error('Error toggling MCQ bookmark', err);
+            }
+        }
     </script>
 }
