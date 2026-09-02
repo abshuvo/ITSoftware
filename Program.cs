@@ -20,9 +20,8 @@ namespace ITSoftware
 
             var app = builder.Build();
             
-            // Auto-seed Previous Year Questions and Technical MCQs
+            // Auto-seed Previous Year Questions
             await ITSoftware.Services.PreviousYearQuestionSeeder.InitializeAsync(app.Services);
-            await ITSoftware.Services.McqQuestionSeeder.InitializeAsync(app.Services);
 
             // Configure the HTTP request pipeline.
             if (!app.Environment.IsDevelopment())

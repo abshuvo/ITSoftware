@@ -1,0 +1,317 @@
+@model List<ITSoftware.Models.Flashcard>
+@{
+    ViewData["Title"] = "Flashcards Revision";
+    ViewData["Subtitle"] = "গুরুত্বপূর্ণ টেকনিক্যাল টার্ম, প্রোটোকল ও কনসেপ্টের দ্রুত রিভিশন ডেক";
+
+    string activeCat = ViewBag.ActiveCategory as string ?? "All";
+    string activeFilter = ViewBag.ActiveFilter as string ?? "all";
+    var categories = ViewBag.Categories as List<string> ?? new List<string>();
+    int totalCount = ViewBag.TotalCount != null ? (int)ViewBag.TotalCount : 0;
+    int masteredCount = ViewBag.MasteredCount != null ? (int)ViewBag.MasteredCount : 0;
+    int masteryPercent = ViewBag.MasteryPercent != null ? (int)ViewBag.MasteryPercent : 0;
+}
+
+@section Styles {
+    <style>
+        /* ── 3D Flip Card Styles ── */
+        .flashcard-scene {
+            width: 100%;
+            max-width: 680px;
+            height: 380px;
+            margin: 0 auto 24px;
+            perspective: 1200px;
+        }
+
+        .flashcard-object {
+            width: 100%;
+            height: 100%;
+            position: relative;
+            transform-style: preserve-3d;
+            transition: transform 0.6s cubic-bezier(0.4, 0.2, 0.2, 1);
+            cursor: pointer;
+        }
+
+        .flashcard-object.is-flipped {
+            transform: rotateY(180deg);
+        }
+
+        .flashcard-face {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            backface-visibility: hidden;
+            -webkit-backface-visibility: hidden;
+            border-radius: 20px;
+            padding: 36px 32px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+            border: 1px solid var(--border-color);
+        }
+
+        .flashcard-front {
+            background: var(--bg-card);
+            color: var(--text-main);
+        }
+
+        .flashcard-back {
+            background: var(--bg-subtle);
+            color: var(--text-main);
+            transform: rotateY(180deg);
+            overflow-y: auto;
+        }
+
+        .flashcard-prompt {
+            font-size: 11.5px;
+            color: var(--text-dim);
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+        }
+    </style>
+}
+
+<!-- Top Stats Strip & Mastery Progress -->
+<div class="card border-0 shadow-sm mb-4" style="border-radius:16px;">
+    <div class="card-body p-4">
+        <div class="row align-items-center g-3">
+            <div class="col-md-6">
+                <div class="d-flex align-items-center gap-3">
+                    <div style="width:48px;height:48px;border-radius:12px;background:var(--primary-lt);color:var(--primary);display:flex;align-items:center;justify-content:center;font-size:24px;">
+                        <i class="bi bi-stack"></i>
+                    </div>
+                    <div>
+                        <h5 class="fw-bold mb-0">Flashcard Mastery</h5>
+                        <small class="text-muted">
+                            <span id="statMastered">@masteredCount</span> / <span id="statTotal">@totalCount</span> টি কার্ড আয়ত্ত হয়েছে (<span id="statPercent">@masteryPercent</span>%)
+                        </small>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="d-flex align-items-center gap-3">
+                    <div class="progress flex-grow-1" style="height:10px;border-radius:5px;background:var(--bg-subtle);">
+                        <div class="progress-bar bg-success" id="masteryProgressBar" style="width:@masteryPercent%;border-radius:5px;transition:width 0.4s ease;"></div>
+                    </div>
+                    <form asp-action="ResetMastery" method="post" onsubmit="return confirm('আপনি কি এই ক্যাটাগরির সমস্ত কার্ডের অগ্রগতি রিসেট করতে চান?')">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" name="category" value="@activeCat" />
+                        <button type="submit" class="btn btn-sm btn-outline-secondary" style="border-radius:6px;font-size:11px;" title="Reset Progress">
+                            <i class="bi bi-arrow-counterclockwise"></i> রিসেট
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Category Filters -->
+<div class="d-flex align-items-center gap-2 mb-4 flex-wrap">
+    <a asp-action="Index" asp-route-category="All" class="btn btn-sm @(activeCat == "All" ? "btn-primary" : "btn-outline-secondary")" style="border-radius:20px;padding:5px 14px;font-size:12px;">
+        🎯 All Topics (@totalCount)
+    </a>
+    @foreach (var c in categories)
+    {
+        <a asp-action="Index" asp-route-category="@c" class="btn btn-sm @(activeCat == c ? "btn-primary" : "btn-outline-secondary")" style="border-radius:20px;padding:5px 14px;font-size:12px;">
+            📁 @c
+        </a>
+    }
+</div>
+
+@if (Model.Count == 0)
+{
+    <div class="text-center py-5 text-muted">
+        <i class="bi bi-card-text" style="font-size:42px;opacity:0.5;"></i>
+        <p class="mt-2">এই ক্যাটাগরিতে কোনো ফ্ল্যাশ কার্ড নেই।</p>
+    </div>
+}
+else
+{
+    <!-- Active Interactive Flashcard Container -->
+    <div class="flashcard-scene" onclick="flipActiveCard()">
+        <div class="flashcard-object" id="flashcardObj">
+            <!-- Front Face -->
+            <div class="flashcard-face flashcard-front">
+                <div class="d-flex align-items-center justify-content-between">
+                    <span class="badge bg-primary-subtle text-primary px-3 py-1" id="cardCategory" style="font-size:11.5px;border-radius:20px;">
+                        @Model[0].Category
+                    </span>
+                    <span class="badge bg-secondary-subtle text-muted" id="cardCounter" style="font-size:11px;border-radius:6px;">
+                        কার্ড ১ / @Model.Count
+                    </span>
+                </div>
+
+                <div class="my-auto text-center px-3">
+                    <h4 class="fw-bold lh-base mb-3" id="cardFrontText" style="color:var(--text-heading);font-size:21px;">
+                        @Model[0].FrontText
+                    </h4>
+                    @if (!string.IsNullOrEmpty(Model[0].Hint))
+                    {
+                        <small class="text-muted fst-italic d-block" id="cardHint">
+                            💡 Hint: @Model[0].Hint
+                        </small>
+                    }
+                </div>
+
+                <div class="flashcard-prompt">
+                    <i class="bi bi-arrow-repeat"></i> ক্লিক করে উত্তর / সমাধান দেখুন (Click to Flip)
+                </div>
+            </div>
+
+            <!-- Back Face -->
+            <div class="flashcard-face flashcard-back">
+                <div class="d-flex align-items-center justify-content-between mb-3">
+                    <span class="badge bg-success-subtle text-success px-3 py-1" style="font-size:11.5px;border-radius:20px;">
+                        <i class="bi bi-check2-circle me-1"></i>সমাধান / সারসংক্ষেপ
+                    </span>
+                    <span class="badge bg-secondary-subtle text-muted" id="cardCounterBack" style="font-size:11px;border-radius:6px;">
+                        কার্ড ১ / @Model.Count
+                    </span>
+                </div>
+
+                <div class="my-auto text-start px-2" style="white-space:pre-wrap;line-height:1.7;font-size:14px;" id="cardBackText">
+                    @Model[0].BackText
+                </div>
+
+                <div class="flashcard-prompt mt-3">
+                    <i class="bi bi-arrow-repeat"></i> ক্লিক করে প্রশ্নে ফিরে যান
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Controls & Self-Assessment Rating -->
+    <div class="d-flex align-items-center justify-content-center gap-3 mb-5 flex-wrap">
+        <button type="button" class="btn btn-outline-secondary px-3 py-2" onclick="prevCard()" style="border-radius:10px;">
+            <i class="bi bi-chevron-left"></i> পূর্ববর্তী
+        </button>
+
+        <button type="button" class="btn btn-outline-danger px-4 py-2 fw-semibold" id="btnLearning" onclick="rateCard(false)" style="border-radius:10px;">
+            <i class="bi bi-x-circle me-1"></i> এখনো শিখছি (Learning)
+        </button>
+
+        <button type="button" class="btn btn-success px-4 py-2 fw-semibold" id="btnMastered" onclick="rateCard(true)" style="border-radius:10px;">
+            <i class="bi bi-check-circle me-1"></i> আয়ত্ত হয়েছে (Mastered)
+        </button>
+
+        <button type="button" class="btn btn-outline-secondary px-3 py-2" onclick="nextCard()" style="border-radius:10px;">
+            পরবর্তী <i class="bi bi-chevron-right"></i>
+        </button>
+    </div>
+}
+
+@section Scripts {
+    <script>
+        const cards = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.Select(c => new {
+            id = c.Id,
+            category = c.Category,
+            frontText = c.FrontText,
+            backText = c.BackText,
+            hint = c.Hint,
+            isMastered = c.IsMastered
+        })));
+
+        let currentIndex = 0;
+
+        function flipActiveCard() {
+            const cardObj = document.getElementById('flashcardObj');
+            if (cardObj) {
+                cardObj.classList.toggle('is-flipped');
+            }
+        }
+
+        function renderCard() {
+            if (!cards || cards.length === 0) return;
+            const c = cards[currentIndex];
+
+            // Unflip card
+            document.getElementById('flashcardObj')?.classList.remove('is-flipped');
+
+            setTimeout(() => {
+                document.getElementById('cardCategory').innerText = c.category;
+                document.getElementById('cardCounter').innerText = `কার্ড ${currentIndex + 1} / ${cards.length}`;
+                document.getElementById('cardCounterBack').innerText = `কার্ড ${currentIndex + 1} / ${cards.length}`;
+                document.getElementById('cardFrontText').innerText = c.frontText;
+                document.getElementById('cardBackText').innerText = c.backText;
+
+                const hintEl = document.getElementById('cardHint');
+                if (hintEl) {
+                    if (c.hint) {
+                        hintEl.innerText = `💡 Hint: ${c.hint}`;
+                        hintEl.style.display = 'block';
+                    } else {
+                        hintEl.style.display = 'none';
+                    }
+                }
+
+                // Update Mastered button appearance
+                const btnMastered = document.getElementById('btnMastered');
+                if (btnMastered) {
+                    if (c.isMastered) {
+                        btnMastered.className = 'btn btn-success px-4 py-2 fw-semibold';
+                    } else {
+                        btnMastered.className = 'btn btn-outline-success px-4 py-2 fw-semibold';
+                    }
+                }
+            }, 150);
+        }
+
+        function nextCard() {
+            if (currentIndex < cards.length - 1) {
+                currentIndex++;
+                renderCard();
+            } else {
+                currentIndex = 0; // Loop back
+                renderCard();
+            }
+        }
+
+        function prevCard() {
+            if (currentIndex > 0) {
+                currentIndex--;
+                renderCard();
+            } else {
+                currentIndex = cards.length - 1;
+                renderCard();
+            }
+        }
+
+        async function rateCard(mastered) {
+            const c = cards[currentIndex];
+            try {
+                const res = await fetch(`/Flashcard/ToggleMastered?id=${c.id}`, {
+                    method: 'POST'
+                });
+                const data = await res.json();
+                if (data.success) {
+                    c.isMastered = data.isMastered;
+                    document.getElementById('statMastered').innerText = data.masteredCount;
+                    document.getElementById('statPercent').innerText = data.percent;
+                    document.getElementById('masteryProgressBar').style.width = data.percent + '%';
+
+                    // Auto advance to next card
+                    setTimeout(() => nextCard(), 250);
+                }
+            } catch (err) {
+                console.error('Error updating mastery', err);
+            }
+        }
+
+        // Keyboard navigation (Arrow keys, Space to flip)
+        document.addEventListener('keydown', e => {
+            if (e.code === 'Space') {
+                e.preventDefault();
+                flipActiveCard();
+            } else if (e.code === 'ArrowRight') {
+                nextCard();
+            } else if (e.code === 'ArrowLeft') {
+                prevCard();
+            }
+        });
+    </script>
+}

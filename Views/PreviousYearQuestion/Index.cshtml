@@ -1,7 +1,7 @@
 @model ITSoftware.Models.ViewModels.PreviousYearQuestionIndexViewModel
 @{
     ViewData["Title"] = "Previous Year Questions";
-    ViewData["Subtitle"] = "ব্যাংক আইটি পরীক্ষার বিগত সালের প্রশ্নব্যাংক (২০১১–২০২৬)";
+    ViewData["Subtitle"] = "ব্যাংক আইটি পরীক্ষার বিগত সালের প্রশ্নব্যাংক (২০২০–২০২৬)";
 
     var currentCatSummary = Model.CategorySummaries.FirstOrDefault(c => c.Category == Model.ActiveCategory);
 }
@@ -335,83 +335,10 @@
             background: #FFFBEB;
             border: 1px dashed #FCD34D;
             border-radius: 8px;
-            padding: 9px 12px;
+            padding: 10px 14px;
             font-size: 12.5px;
             color: #92400E;
             margin-bottom: 12px;
-            transition: all .2s ease;
-        }
-
-        .q-notes-header {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            cursor: pointer;
-            user-select: none;
-        }
-
-        .q-notes-title {
-            font-size: 11px;
-            font-weight: 700;
-            text-transform: uppercase;
-            letter-spacing: 0.04em;
-            color: #B45309;
-            display: flex;
-            align-items: center;
-            gap: 5px;
-        }
-
-        .q-notes-actions {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .q-notes-toggle-btn {
-            background: #FEF3C7;
-            border: 1px solid #FDE68A;
-            color: #92400E;
-            font-size: 11px;
-            font-weight: 600;
-            padding: 2px 7px;
-            border-radius: 5px;
-            display: inline-flex;
-            align-items: center;
-            gap: 3px;
-            cursor: pointer;
-            transition: all .15s ease;
-            text-decoration: none;
-        }
-
-        .q-notes-toggle-btn:hover {
-            background: #FDE68A;
-            color: #78350F;
-        }
-
-        .notes-content {
-            color: #451A03;
-            line-height: 1.55;
-            white-space: pre-wrap;
-            word-break: break-word;
-            font-size: 12.5px;
-            margin-top: 6px;
-            padding-top: 4px;
-            border-top: 1px dashed rgba(245, 158, 11, 0.25);
-            transition: max-height .25s ease;
-        }
-
-        .notes-content.is-collapsed {
-            display: -webkit-box;
-            -webkit-line-clamp: 2;
-            -webkit-box-orient: vertical;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            cursor: pointer;
-            opacity: 0.9;
-        }
-
-        .notes-content.is-collapsed:hover {
-            opacity: 1;
         }
 
         .q-footer {
@@ -571,8 +498,8 @@
             <i class="bi bi-calendar-range"></i>
         </div>
         <div>
-            <div class="stat-mini-val" style="color:#993C1D;">2011–2026</div>
-            <div class="stat-mini-lbl">বিগত সালের প্রশ্ন</div>
+            <div class="stat-mini-val" style="color:#993C1D;">2020–2026</div>
+            <div class="stat-mini-lbl">৭ বছরের প্রশ্ন</div>
         </div>
     </div>
 </div>
@@ -656,16 +583,13 @@
             }
         </div>
 
-        <div style="padding:12px 16px;border-top:1px solid #f0f0ee;background:#fafaf8;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:6px;">
+        <div style="padding:12px 16px;border-top:1px solid #f0f0ee;background:#fafaf8;display:flex;justify-content:space-between;align-items:center;">
             <button class="btn btn-sm btn-outline-primary" style="font-size:11px;border-radius:6px;" data-bs-toggle="modal" data-bs-target="#addQuestionModal">
-                <i class="bi bi-plus-lg me-1"></i>প্রশ্ন যোগ
+                <i class="bi bi-plus-lg me-1"></i>প্রশ্ন যোগ করুন
             </button>
-            <a asp-action="ExportExcel" asp-route-all="true" class="btn btn-sm btn-outline-success" style="font-size:11px;border-radius:6px;" title="সকল বিগত সালের প্রশ্ন এক্সেলে ডাউনলোড">
-                <i class="bi bi-file-earmark-excel-fill me-1"></i>Excel ডাউনলোড
-            </a>
-            <form asp-action="ResetData" method="post" onsubmit="return confirm('আপনি কি নিশ্চিত যে সকল প্রশ্ন পুনরায় লোড ও রিসেট করতে চান?')">
+            <form asp-action="ResetData" method="post" onsubmit="return confirm('আপনি কি নিশ্চিত যে সকল ৪১৪টি প্রশ্ন পুনরায় লোড করতে চান?')">
                 @Html.AntiForgeryToken()
-                <button type="submit" class="btn btn-sm btn-link text-muted p-0" style="font-size:11px;text-decoration:none;" title="রিসেট প্রশ্ন">
+                <button type="submit" class="btn btn-sm btn-link text-muted p-0" style="font-size:11px;text-decoration:none;">
                     <i class="bi bi-arrow-clockwise"></i> রিসেট
                 </button>
             </form>
@@ -775,70 +699,8 @@
                         </a>
                     </div>
 
-                    <div class="d-flex align-items-center gap-3">
-                        <div style="font-size:12.5px;color:#777;">
-                            দেখাচ্ছে: <strong style="color:var(--primary);">@Model.Questions.Count</strong> টি প্রশ্ন
-                        </div>
-
-                        <!-- Excel Export Dropdown -->
-                        <div class="dropdown">
-                            <button class="btn btn-sm btn-success dropdown-toggle d-inline-flex align-items-center gap-1 shadow-sm" type="button" data-bs-toggle="dropdown" aria-expanded="false" style="font-size:12px; padding: 4px 12px; border-radius: 7px; font-weight: 600;">
-                                <i class="bi bi-file-earmark-excel-fill"></i> Excel এ ডাউনলোড
-                            </button>
-                            <ul class="dropdown-menu dropdown-menu-end shadow-sm" style="font-size:12.5px; border-radius: 8px; min-width: 260px;">
-                                <li>
-                                    <h6 class="dropdown-header text-uppercase" style="font-size:10.5px; letter-spacing:0.5px;">Excel (.xlsx) ফরম্যাট</h6>
-                                </li>
-                                <li>
-                                    <a class="dropdown-item d-flex align-items-center justify-content-between py-2" asp-action="ExportExcel"
-                                       asp-route-category="@Model.ActiveCategory"
-                                       asp-route-year="@Model.ActiveYear"
-                                       asp-route-examOrg="@Model.ActiveExamOrg"
-                                       asp-route-post="@Model.ActivePost"
-                                       asp-route-search="@Model.SearchQuery"
-                                       asp-route-status="@Model.ActiveStatus">
-                                        <span class="d-flex align-items-center gap-2">
-                                            <i class="bi bi-filter-circle text-success"></i> বর্তমান ফিল্টারের প্রশ্ন
-                                        </span>
-                                        <span class="badge bg-light text-dark border">@Model.Questions.Count</span>
-                                    </a>
-                                </li>
-                                <li>
-                                    <a class="dropdown-item d-flex align-items-center justify-content-between py-2" asp-action="ExportExcel" asp-route-all="true">
-                                        <span class="d-flex align-items-center gap-2">
-                                            <i class="bi bi-database-down text-primary"></i> সকল প্রশ্ন (সব ক্যাটাগরি)
-                                        </span>
-                                        <span class="badge bg-light text-dark border">@Model.TotalCount</span>
-                                    </a>
-                                </li>
-                                <li><hr class="dropdown-divider my-1"></li>
-                                <li>
-                                    <h6 class="dropdown-header text-uppercase" style="font-size:10.5px; letter-spacing:0.5px;">ব্যাংক অনুযায়ী ফিল্টার</h6>
-                                </li>
-                                <li>
-                                    <a class="dropdown-item d-flex align-items-center gap-2 py-2" asp-action="ExportExcel" asp-route-all="true" asp-route-bankType="bb">
-                                        <i class="bi bi-bank text-danger"></i> শুধুমাত্র বাংলাদেশ ব্যাংক (BB)
-                                    </a>
-                                </li>
-                                <li>
-                                    <a class="dropdown-item d-flex align-items-center gap-2 py-2" asp-action="ExportExcel" asp-route-all="true" asp-route-bankType="combined">
-                                        <i class="bi bi-building text-info"></i> শুধুমাত্র কম্বাইন্ড ব্যাংক (Combined)
-                                    </a>
-                                </li>
-                                <li><hr class="dropdown-divider my-1"></li>
-                                <li>
-                                    <a class="dropdown-item d-flex align-items-center gap-2 py-2 text-muted" asp-action="ExportCsv"
-                                       asp-route-category="@Model.ActiveCategory"
-                                       asp-route-year="@Model.ActiveYear"
-                                       asp-route-examOrg="@Model.ActiveExamOrg"
-                                       asp-route-post="@Model.ActivePost"
-                                       asp-route-search="@Model.SearchQuery"
-                                       asp-route-status="@Model.ActiveStatus">
-                                        <i class="bi bi-filetype-csv"></i> CSV ফাইল হিসেবে ডাউনলোড (.csv)
-                                    </a>
-                                </li>
-                            </ul>
-                        </div>
+                    <div style="font-size:12.5px;color:#777;">
+                        দেখাচ্ছে: <strong style="color:var(--primary);">@Model.Questions.Count</strong> টি প্রশ্ন
                     </div>
                 </div>
             </form>
@@ -915,22 +777,15 @@
 
                         <!-- User Notes / Solution Box (if any) -->
                         <div class="q-notes-box" id="qnotes-@q.Id" style="@(string.IsNullOrEmpty(q.UserNotes) ? "display:none;" : "")">
-                            <div class="q-notes-header" onclick="toggleNoteExpand(@q.Id, event)">
-                                <div class="q-notes-title">
-                                    <i class="bi bi-journal-check"></i>
-                                    <span>আপনার নোট / সমাধান</span>
-                                </div>
-                                <div class="q-notes-actions">
-                                    <button type="button" class="btn btn-sm btn-link p-0 text-muted" onclick="event.stopPropagation(); openNoteModal(@q.Id, document.getElementById('qnotes-content-@q.Id')?.innerText || '')" style="font-size:11px;text-decoration:none;" title="নোট এডিট করুন">
-                                        <i class="bi bi-pencil"></i> এডিট
-                                    </button>
-                                    <button type="button" class="q-notes-toggle-btn" id="qnotes-toggle-btn-@q.Id" onclick="event.stopPropagation(); toggleNoteExpand(@q.Id, event)" title="নোট বড়/ছোট করুন">
-                                        <span id="qnotes-toggle-txt-@q.Id">বিস্তারিত</span>
-                                        <i class="bi bi-chevron-down" id="qnotes-chevron-@q.Id" style="font-size:10px;"></i>
-                                    </button>
-                                </div>
+                            <div class="d-flex align-items-center justify-content-between mb-1">
+                                <strong style="font-size:11px;text-transform:uppercase;letter-spacing:0.04em;">
+                                    <i class="bi bi-journal-check me-1"></i>আপনার নোট / সমাধান
+                                </strong>
+                                <button type="button" class="btn btn-sm btn-link p-0 text-muted" onclick="openNoteModal(@q.Id, '@Html.Raw(System.Web.HttpUtility.JavaScriptStringEncode(q.UserNotes ?? ""))')" style="font-size:11px;text-decoration:none;">
+                                    <i class="bi bi-pencil"></i> এডিট
+                                </button>
                             </div>
-                            <div class="notes-content is-collapsed" id="qnotes-content-@q.Id" onclick="toggleNoteExpand(@q.Id, event)" title="ক্লিক করে সম্পূর্ণ নোট দেখুন">@q.UserNotes</div>
+                            <div class="notes-content" id="qnotes-content-@q.Id">@q.UserNotes</div>
                         </div>
 
                         <!-- Bottom Actions -->
@@ -1212,28 +1067,6 @@
             }
         }
 
-        // ── Note Expand / Collapse ──
-        function toggleNoteExpand(id, event) {
-            if (event) event.stopPropagation();
-            const content = document.getElementById(`qnotes-content-${id}`);
-            const txt = document.getElementById(`qnotes-toggle-txt-${id}`);
-            const chevron = document.getElementById(`qnotes-chevron-${id}`);
-            if (!content) return;
-
-            const isCollapsed = content.classList.contains('is-collapsed');
-            if (isCollapsed) {
-                content.classList.remove('is-collapsed');
-                if (txt) txt.innerText = 'সংক্ষেপ';
-                if (chevron) chevron.className = 'bi bi-chevron-up';
-                content.title = 'ক্লিক করে নোট ছোট করুন';
-            } else {
-                content.classList.add('is-collapsed');
-                if (txt) txt.innerText = 'বিস্তারিত';
-                if (chevron) chevron.className = 'bi bi-chevron-down';
-                content.title = 'ক্লিক করে সম্পূর্ণ নোট দেখুন';
-            }
-        }
-
         // ── Note Modal & Save ──
         let noteModalObj = null;
         function openNoteModal(id, noteText) {
@@ -1262,17 +1095,10 @@
                 if (data.success) {
                     const box = document.getElementById(`qnotes-${id}`);
                     const content = document.getElementById(`qnotes-content-${id}`);
-                    const txt = document.getElementById(`qnotes-toggle-txt-${id}`);
-                    const chevron = document.getElementById(`qnotes-chevron-${id}`);
 
                     if (note && note.trim().length > 0) {
                         content.innerText = note;
                         box.style.display = 'block';
-                        // Expand the note after saving
-                        content.classList.remove('is-collapsed');
-                        if (txt) txt.innerText = 'সংক্ষেপ';
-                        if (chevron) chevron.className = 'bi bi-chevron-up';
-                        content.title = 'ক্লিক করে নোট ছোট করুন';
                     } else {
                         content.innerText = '';
                         box.style.display = 'none';

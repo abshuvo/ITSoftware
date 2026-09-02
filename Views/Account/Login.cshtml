@@ -1,0 +1,333 @@
+@model ITSoftware.Models.ViewModels.LoginViewModel
+@{
+    Layout = null;
+    ViewData["Title"] = "Sign In — Exam Prep Portal";
+}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"]</title>
+
+    <!-- Early Theme Initialisation -->
+    <script>
+        (function() {
+            const savedTheme = localStorage.getItem('theme');
+            const systemPrefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+            const theme = savedTheme ? savedTheme : (systemPrefersDark ? 'dark' : 'light');
+            document.documentElement.setAttribute('data-bs-theme', theme);
+        })();
+    </script>
+
+    <!-- Bootstrap 5 -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" />
+    <!-- Bootstrap Icons -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet" />
+    <!-- Site Styles -->
+    <link href="~/css/site.css" rel="stylesheet" asp-append-version="true" />
+
+    <style>
+        body {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background-color: var(--bg-body);
+            color: var(--text-main);
+            padding: 20px;
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            position: relative;
+        }
+
+        /* Background glow elements */
+        .bg-glow-1 {
+            position: absolute;
+            width: 320px;
+            height: 320px;
+            background: radial-gradient(circle, rgba(83, 74, 183, 0.15) 0%, rgba(83, 74, 183, 0) 70%);
+            top: 10%;
+            left: 15%;
+            z-index: 0;
+            pointer-events: none;
+        }
+
+        .bg-glow-2 {
+            position: absolute;
+            width: 380px;
+            height: 380px;
+            background: radial-gradient(circle, rgba(29, 158, 117, 0.12) 0%, rgba(29, 158, 117, 0) 70%);
+            bottom: 10%;
+            right: 15%;
+            z-index: 0;
+            pointer-events: none;
+        }
+
+        .login-card {
+            width: 100%;
+            max-width: 440px;
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 20px;
+            padding: 36px 32px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+            position: relative;
+            z-index: 10;
+            backdrop-filter: blur(10px);
+        }
+
+        .top-theme-switch {
+            position: absolute;
+            top: 20px;
+            right: 24px;
+            z-index: 20;
+        }
+
+        .login-brand-icon {
+            width: 54px;
+            height: 54px;
+            background: var(--primary);
+            border-radius: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #fff;
+            font-size: 26px;
+            margin: 0 auto 16px;
+            box-shadow: 0 6px 16px rgba(83, 74, 183, 0.35);
+        }
+
+        .login-title {
+            font-size: 22px;
+            font-weight: 700;
+            color: var(--text-heading);
+            margin-bottom: 4px;
+            text-align: center;
+        }
+
+        .login-sub {
+            font-size: 13px;
+            color: var(--text-muted);
+            text-align: center;
+            margin-bottom: 26px;
+        }
+
+        .form-label {
+            font-size: 12.5px;
+            font-weight: 600;
+            color: var(--text-main);
+            margin-bottom: 6px;
+        }
+
+        .input-group-custom {
+            position: relative;
+            display: flex;
+            align-items: center;
+        }
+
+        .input-group-custom .input-icon {
+            position: absolute;
+            left: 14px;
+            color: var(--text-dim);
+            font-size: 15px;
+            pointer-events: none;
+            z-index: 5;
+        }
+
+        .input-group-custom .form-control {
+            padding-left: 40px;
+            padding-right: 42px;
+            height: 46px;
+            font-size: 14px;
+            border-radius: 10px;
+            border: 1px solid var(--border-color);
+            background: var(--input-bg);
+            color: var(--text-main);
+            transition: all 0.2s ease;
+        }
+
+        .input-group-custom .form-control:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px var(--primary-lt);
+        }
+
+        .password-toggle-btn {
+            position: absolute;
+            right: 12px;
+            background: none;
+            border: none;
+            color: var(--text-dim);
+            font-size: 16px;
+            cursor: pointer;
+            padding: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 5;
+            transition: color 0.15s;
+        }
+
+        .password-toggle-btn:hover {
+            color: var(--text-main);
+        }
+
+        .btn-login {
+            height: 46px;
+            font-size: 15px;
+            font-weight: 600;
+            background: var(--primary);
+            color: #fff;
+            border: none;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            width: 100%;
+            transition: all 0.2s ease;
+            box-shadow: 0 4px 12px rgba(83, 74, 183, 0.25);
+        }
+
+        .btn-login:hover {
+            background: var(--primary-hover);
+            color: #fff;
+            transform: translateY(-1px);
+            box-shadow: 0 6px 16px rgba(83, 74, 183, 0.35);
+        }
+
+        .login-footer {
+            font-size: 11.5px;
+            color: var(--text-dim);
+            text-align: center;
+            margin-top: 24px;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Ambient glow decoration -->
+    <div class="bg-glow-1"></div>
+    <div class="bg-glow-2"></div>
+
+    <!-- Theme Switcher in top right corner -->
+    <div class="top-theme-switch">
+        <button type="button" class="theme-toggle-btn" id="themeToggleBtn" onclick="toggleTheme()" title="Switch Light/Dark Theme">
+            <i class="bi bi-sun-fill text-warning" id="theme-icon"></i>
+            <span id="theme-text">Light</span>
+        </button>
+    </div>
+
+    <div class="login-card">
+        <div class="login-brand-icon">
+            <i class="bi bi-mortarboard-fill"></i>
+        </div>
+
+        <h1 class="login-title">Exam Prep Portal</h1>
+        <p class="login-sub">ব্যাংক আইটি ও রিক্রুটমেন্ট প্রস্তুতি পোর্টালে সাইন ইন করুন</p>
+
+        @if (!ViewData.ModelState.IsValid)
+        {
+            <div class="alert alert-danger d-flex align-items-center gap-2 py-2 px-3 mb-4" role="alert" style="border-radius:10px;font-size:13px;">
+                <i class="bi bi-exclamation-triangle-fill flex-shrink-0"></i>
+                <div>
+                    @foreach (var error in ViewData.ModelState.Values.SelectMany(v => v.Errors))
+                    {
+                        <div>@error.ErrorMessage</div>
+                    }
+                </div>
+            </div>
+        }
+
+        <form asp-controller="Account" asp-action="Login" method="post">
+            @Html.AntiForgeryToken()
+            <input type="hidden" asp-for="ReturnUrl" />
+
+            <div class="mb-3">
+                <label asp-for="Username" class="form-label">ইউজার আইডি / User ID</label>
+                <div class="input-group-custom">
+                    <i class="bi bi-person input-icon"></i>
+                    <input asp-for="Username" class="form-control" placeholder="আপনার ইউজার আইডি লিখুন..." autocomplete="username" autofocus />
+                </div>
+                <span asp-validation-for="Username" class="text-danger small mt-1 d-block"></span>
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="Password" class="form-label">পাসওয়ার্ড / Password</label>
+                <div class="input-group-custom">
+                    <i class="bi bi-lock input-icon"></i>
+                    <input asp-for="Password" class="form-control" type="password" id="passwordInput" placeholder="পাসওয়ার্ড লিখুন..." autocomplete="current-password" />
+                    <button type="button" class="password-toggle-btn" onclick="togglePasswordVisibility()" title="পাসওয়ার্ড দেখুন বা লুকান">
+                        <i class="bi bi-eye" id="passToggleIcon"></i>
+                    </button>
+                </div>
+                <span asp-validation-for="Password" class="text-danger small mt-1 d-block"></span>
+            </div>
+
+            <div class="d-flex align-items-center justify-content-between mb-4">
+                <div class="form-check">
+                    <input asp-for="RememberMe" class="form-check-input" type="checkbox" id="rememberMeCheck" />
+                    <label class="form-check-label small text-muted" for="rememberMeCheck">
+                        মনে রাখুন (Remember me)
+                    </label>
+                </div>
+            </div>
+
+            <button type="submit" class="btn btn-login">
+                <i class="bi bi-box-arrow-in-right"></i>
+                <span>সাইন ইন করুন</span>
+            </button>
+        </form>
+
+        <div class="login-footer">
+            <i class="bi bi-shield-lock me-1"></i> সুরক্ষিত ও ব্যক্তিগত পোর্টাল
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Password Visibility Toggle
+        function togglePasswordVisibility() {
+            const passInput = document.getElementById('passwordInput');
+            const icon = document.getElementById('passToggleIcon');
+            if (passInput.type === 'password') {
+                passInput.type = 'text';
+                icon.className = 'bi bi-eye-slash';
+            } else {
+                passInput.type = 'password';
+                icon.className = 'bi bi-eye';
+            }
+        }
+
+        // Theme Toggle
+        function getCurrentTheme() {
+            return document.documentElement.getAttribute('data-bs-theme') || 'light';
+        }
+
+        function updateThemeUI(theme) {
+            const icon = document.getElementById('theme-icon');
+            const text = document.getElementById('theme-text');
+            if (theme === 'dark') {
+                if (icon) icon.className = 'bi bi-moon-stars-fill text-info';
+                if (text) text.innerText = 'Dark';
+            } else {
+                if (icon) icon.className = 'bi bi-sun-fill text-warning';
+                if (text) text.innerText = 'Light';
+            }
+        }
+
+        function toggleTheme() {
+            const current = getCurrentTheme();
+            const newTheme = current === 'dark' ? 'light' : 'dark';
+            document.documentElement.setAttribute('data-bs-theme', newTheme);
+            localStorage.setItem('theme', newTheme);
+            updateThemeUI(newTheme);
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            updateThemeUI(getCurrentTheme());
+        });
+    </script>
+</body>
+</html>
+

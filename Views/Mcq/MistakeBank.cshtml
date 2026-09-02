@@ -1,0 +1,188 @@
+@model List<ITSoftware.Models.McqMistake>
+@{
+    ViewData["Title"] = "Mistake Bank";
+    ViewData["Subtitle"] = "কুইজ ও মক টেস্টে ভুল হওয়া প্রশ্নগুলোর রিভিশন হাব";
+
+    string activeCat = ViewBag.ActiveCategory as string ?? "All";
+    string searchQuery = ViewBag.SearchQuery as string ?? "";
+    var categories = ViewBag.Categories as List<string> ?? new List<string>();
+    int totalMistakes = ViewBag.TotalMistakes != null ? (int)ViewBag.TotalMistakes : 0;
+}
+
+<div class="d-flex align-items-center justify-content-between mb-4 flex-wrap gap-2">
+    <div>
+        <h5 class="fw-bold mb-1">
+            <i class="bi bi-x-circle text-danger me-1"></i> আপনার মিস্টেক ব্যাংক (Mistake Bank)
+        </h5>
+        <small class="text-muted">এই প্রশ্নগুলো আপনার আগে ভুল হয়েছিল। পুনরায় অনুশীলন করে আয়ত্ত করুন।</small>
+    </div>
+
+    <div class="d-flex align-items-center gap-2">
+        <span class="badge bg-danger px-3 py-2" style="font-size:12px;border-radius:20px;">
+            মোট ভুল প্রশ্ন: <span id="totalMistakesCount">@totalMistakes</span> টি
+        </span>
+        @if (totalMistakes > 0)
+        {
+            <form asp-action="ClearAllMistakes" method="post" class="d-inline" onsubmit="return confirm('সবগুলো ভুল প্রশ্ন কি রিসলভড হিসেবে মার্ক করতে চান?')">
+                @Html.AntiForgeryToken()
+                <button type="submit" class="btn btn-sm btn-outline-secondary" style="border-radius:8px;font-size:12px;">
+                    <i class="bi bi-check2-all me-1"></i>সব রিসলভ করুন
+                </button>
+            </form>
+        }
+    </div>
+</div>
+
+<!-- Filter Bar -->
+<div class="card border-0 shadow-sm mb-4" style="border-radius:12px;">
+    <div class="card-body p-3">
+        <form method="get" asp-action="MistakeBank" class="row g-2 align-items-center">
+            <div class="col-md-5">
+                <div class="input-group input-group-sm">
+                    <span class="input-group-text bg-transparent border-end-0"><i class="bi bi-search"></i></span>
+                    <input type="text" name="search" value="@searchQuery" class="form-control border-start-0" placeholder="ভুল প্রশ্ন বা কীওয়ার্ড খুঁজুন..." />
+                </div>
+            </div>
+            <div class="col-md-4">
+                <select name="category" class="form-select form-select-sm" onchange="this.form.submit()">
+                    <option value="All">📁 All Categories (@totalMistakes)</option>
+                    @foreach (var c in categories)
+                    {
+                        <option value="@c" selected="@(c == activeCat)">📁 @c</option>
+                    }
+                </select>
+            </div>
+            <div class="col-md-3 d-flex gap-2">
+                <button type="submit" class="btn btn-sm btn-primary flex-grow-1" style="border-radius:6px;">
+                    ফিল্টার করুন
+                </button>
+                @if (!string.IsNullOrEmpty(searchQuery) || activeCat != "All")
+                {
+                    <a asp-action="MistakeBank" class="btn btn-sm btn-outline-secondary" style="border-radius:6px;">
+                        রিসেট
+                    </a>
+                }
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Mistake Question Cards -->
+@if (Model.Count == 0)
+{
+    <div class="card border-0 shadow-sm text-center py-5" style="border-radius:16px;">
+        <div class="card-body">
+            <div style="width:70px;height:70px;border-radius:50%;background:var(--teal-lt);color:var(--teal);margin:0 auto 14px;display:flex;align-items:center;justify-content:center;font-size:32px;">
+                <i class="bi bi-check2-all"></i>
+            </div>
+            <h5 class="fw-bold mb-1">অভিনন্দন! কোনো ভুল প্রশ্ন জমা নেই!</h5>
+            <p class="text-muted small mb-3">আপনি কুইজ ও মক টেস্টে অসাধারণ পারফর্ম করছেন। নতুন টেস্ট দিয়ে নিজের প্রস্তুতি যাচাই করুন।</p>
+            <a asp-controller="MockExam" asp-action="Index" class="btn btn-sm btn-primary px-4 py-2" style="border-radius:8px;">
+                <i class="bi bi-play-circle me-1"></i> মক টেস্ট দিন
+            </a>
+        </div>
+    </div>
+}
+else
+{
+    <div class="row g-3">
+        @foreach (var item in Model)
+        {
+            var q = item.McqQuestion;
+            if (q == null) continue;
+
+            <div class="col-12" id="mistake-card-@item.Id">
+                <div class="card border-0 shadow-sm" style="border-radius:14px;border-left:4px solid var(--coral) !important;">
+                    <div class="card-body p-4">
+                        <div class="d-flex align-items-center justify-content-between mb-2">
+                            <div class="d-flex align-items-center gap-2">
+                                <span class="badge bg-danger-subtle text-danger fw-semibold px-2 py-1" style="font-size:11px;border-radius:6px;">
+                                    <i class="bi bi-x-circle me-1"></i>ভুল করেছেন: @item.WrongAttemptCount বার
+                                </span>
+                                @if (!string.IsNullOrEmpty(q.Category))
+                                {
+                                    <span class="badge bg-primary-subtle text-primary" style="font-size:11px;border-radius:6px;">
+                                        @q.Category
+                                    </span>
+                                }
+                            </div>
+
+                            <button type="button" class="btn btn-sm btn-outline-success" onclick="resolveMistakeAjax(@item.Id)" style="border-radius:6px;font-size:11.5px;">
+                                <i class="bi bi-check2"></i> আয়ত্ত হয়েছে (Resolve)
+                            </button>
+                        </div>
+
+                        <h6 class="fw-semibold mb-3 lh-base" style="font-size:14.5px;color:var(--text-main);">
+                            @q.QuestionText
+                        </h6>
+
+                        <!-- Options Grid -->
+                        <div class="row g-2 mb-3" style="font-size:13px;">
+                            <div class="col-md-6">
+                                <div class="p-2 px-3 border rounded-3 @(q.CorrectAnswer == "A" ? "border-success bg-success-subtle fw-semibold" : item.SelectedOption == "A" ? "border-danger bg-danger-subtle" : "")">
+                                    <strong>A.</strong> @q.OptionA
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="p-2 px-3 border rounded-3 @(q.CorrectAnswer == "B" ? "border-success bg-success-subtle fw-semibold" : item.SelectedOption == "B" ? "border-danger bg-danger-subtle" : "")">
+                                    <strong>B.</strong> @q.OptionB
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="p-2 px-3 border rounded-3 @(q.CorrectAnswer == "C" ? "border-success bg-success-subtle fw-semibold" : item.SelectedOption == "C" ? "border-danger bg-danger-subtle" : "")">
+                                    <strong>C.</strong> @q.OptionC
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="p-2 px-3 border rounded-3 @(q.CorrectAnswer == "D" ? "border-success bg-success-subtle fw-semibold" : item.SelectedOption == "D" ? "border-danger bg-danger-subtle" : "")">
+                                    <strong>D.</strong> @q.OptionD
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Solution & Explanation -->
+                        <div class="p-3" style="background:var(--bg-subtle);border-radius:10px;font-size:12.5px;">
+                            <div class="d-flex align-items-center gap-2 mb-1">
+                                <strong class="text-success">
+                                    <i class="bi bi-check-circle-fill me-1"></i>সঠিক উত্তর: @q.CorrectAnswer (@q.CorrectOptionText)
+                                </strong>
+                            </div>
+                            @if (!string.IsNullOrEmpty(q.Explanation))
+                            {
+                                <div class="text-muted mt-1">
+                                    <strong>ব্যাখ্যা:</strong> @q.Explanation
+                                </div>
+                            }
+                        </div>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+}
+
+@section Scripts {
+    <script>
+        async function resolveMistakeAjax(id) {
+            try {
+                const res = await fetch(`/Mcq/ResolveMistake?id=${id}`, {
+                    method: 'POST'
+                });
+                const data = await res.json();
+                if (data.success) {
+                    const card = document.getElementById(`mistake-card-${id}`);
+                    if (card) {
+                        card.style.transition = 'all 0.3s ease';
+                        card.style.opacity = '0';
+                        card.style.transform = 'scale(0.95)';
+                        setTimeout(() => card.remove(), 300);
+                    }
+                    const countEl = document.getElementById('totalMistakesCount');
+                    if (countEl) countEl.innerText = data.remaining;
+                }
+            } catch (err) {
+                console.error('Error resolving mistake', err);
+            }
+        }
+    </script>
+}

@@ -1,0 +1,180 @@
+@model ITSoftware.Models.ViewModels.MockExamSetupViewModel
+@{
+    ViewData["Title"] = "Timed Mock Test";
+    ViewData["Subtitle"] = "ব্যাংক আইটি ও টেকনিক্যাল পরীক্ষার জন্য টাইমড মক টেস্ট ও সিমুলেটর";
+}
+
+<div class="row g-4">
+    <!-- Setup Card -->
+    <div class="col-lg-5">
+        <div class="card border-0 shadow-sm" style="border-radius:16px;">
+            <div class="card-body p-4">
+                <div class="d-flex align-items-center gap-3 mb-4">
+                    <div style="width:48px;height:48px;border-radius:12px;background:var(--primary-lt);color:var(--primary);display:flex;align-items:center;justify-content:center;font-size:24px;">
+                        <i class="bi bi-stopwatch"></i>
+                    </div>
+                    <div>
+                        <h5 class="fw-bold mb-1">নতুন মক টেস্ট শুরু করুন</h5>
+                        <small class="text-muted">আপনার পছন্দমতো প্রশ্ন ও সময় নির্ধারণ করুন</small>
+                    </div>
+                </div>
+
+                @if (TempData["ErrorMessage"] != null)
+                {
+                    <div class="alert alert-warning py-2 px-3 mb-3 small" style="border-radius:8px;">
+                        <i class="bi bi-exclamation-triangle me-1"></i> @TempData["ErrorMessage"]
+                    </div>
+                }
+
+                <form asp-action="Start" method="post">
+                    @Html.AntiForgeryToken()
+
+                    <!-- Category Selection -->
+                    <div class="mb-3">
+                        <label class="form-label small fw-semibold text-muted">টপিক / ক্যাটাগরি</label>
+                        <select asp-for="Category" class="form-select">
+                            <option value="All">🎯 All Topics (Comprehensive Mixed Test)</option>
+                            @foreach (var cat in Model.AvailableCategories)
+                            {
+                                <option value="@cat">📁 @cat</option>
+                            }
+                        </select>
+                    </div>
+
+                    <!-- Question Count -->
+                    <div class="mb-3">
+                        <label class="form-label small fw-semibold text-muted">প্রশ্নের সংখ্যা</label>
+                        <div class="row g-2">
+                            <div class="col-3">
+                                <input type="radio" class="btn-check" name="QuestionCount" id="q20" value="20" />
+                                <label class="btn btn-outline-primary w-100 py-2" for="q20" style="border-radius:8px;font-size:13px;font-weight:600;">20 Q</label>
+                            </div>
+                            <div class="col-3">
+                                <input type="radio" class="btn-check" name="QuestionCount" id="q25" value="25" checked />
+                                <label class="btn btn-outline-primary w-100 py-2" for="q25" style="border-radius:8px;font-size:13px;font-weight:600;">25 Q</label>
+                            </div>
+                            <div class="col-3">
+                                <input type="radio" class="btn-check" name="QuestionCount" id="q50" value="50" />
+                                <label class="btn btn-outline-primary w-100 py-2" for="q50" style="border-radius:8px;font-size:13px;font-weight:600;">50 Q</label>
+                            </div>
+                            <div class="col-3">
+                                <input type="radio" class="btn-check" name="QuestionCount" id="q100" value="100" />
+                                <label class="btn btn-outline-primary w-100 py-2" for="q100" style="border-radius:8px;font-size:13px;font-weight:600;">100 Q</label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Duration Selection -->
+                    <div class="mb-3">
+                        <label class="form-label small fw-semibold text-muted">পরীক্ষার সময়সীমা (Duration)</label>
+                        <select asp-for="DurationMinutes" class="form-select">
+                            <option value="15">⏱️ ১৫ মিনিট (Quick Sprint)</option>
+                            <option value="25" selected>⏱️ ২৫ মিনিট (Standard Test)</option>
+                            <option value="45">⏱️ ৪৫ মিনিট (Extended Test)</option>
+                            <option value="60">⏱️ ৬০ মিনিট (Full Mock Test)</option>
+                            <option value="90">⏱️ ৯০ মিনিট (Comprehensive Marathon)</option>
+                        </select>
+                    </div>
+
+                    <!-- Negative Marking Toggle -->
+                    <div class="mb-4">
+                        <div class="form-check form-switch p-0 d-flex align-items-center justify-content-between" style="background:var(--bg-subtle);border-radius:10px;padding:10px 14px !important;">
+                            <div>
+                                <label class="form-check-label fw-semibold small mb-0 d-block" for="negMarkSwitch">নেগেটিভ মার্কিং (-0.25)</label>
+                                <small class="text-muted" style="font-size:11px;">ভুল উত্তরের জন্য ০.২৫ নম্বর কাটা যাবে</small>
+                            </div>
+                            <input asp-for="HasNegativeMarking" class="form-check-input ms-0" type="checkbox" id="negMarkSwitch" checked style="cursor:pointer;" />
+                        </div>
+                    </div>
+
+                    <!-- Submit / Start Button -->
+                    <button type="submit" class="btn btn-primary w-100 py-2 fw-semibold d-flex align-items-center justify-content-center gap-2" style="border-radius:10px;font-size:15px;">
+                        <i class="bi bi-play-circle-fill"></i>
+                        <span>পরীক্ষা শুরু করুন (Start Exam)</span>
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Past Exam History & Statistics -->
+    <div class="col-lg-7">
+        <div class="card border-0 shadow-sm" style="border-radius:16px;">
+            <div class="card-header bg-transparent border-0 pt-4 px-4 pb-2 d-flex align-items-center justify-content-between">
+                <div>
+                    <h5 class="fw-bold mb-1">পূর্ববর্তী মক টেস্টের ফলাফল</h5>
+                    <small class="text-muted">আপনার বিগত পরীক্ষার রেকর্ড ও পারফরম্যান্স</small>
+                </div>
+                <span class="badge bg-primary px-3 py-2" style="font-size:12px;border-radius:20px;">
+                    মোট পরীক্ষা: @Model.PastExamResults.Count টি
+                </span>
+            </div>
+
+            <div class="card-body p-4">
+                @if (Model.PastExamResults.Count == 0)
+                {
+                    <div class="text-center py-5 text-muted">
+                        <i class="bi bi-journal-x" style="font-size:42px;opacity:0.5;"></i>
+                        <p class="mt-2 mb-0">এখনো কোনো মক টেস্ট দেওয়া হয়নি। বামপাশের ফর্ম থেকে প্রথম পরীক্ষাটি শুরু করুন!</p>
+                    </div>
+                }
+                else
+                {
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle mb-0" style="font-size:13px;">
+                            <thead>
+                                <tr class="text-muted small">
+                                    <th>তারিখ</th>
+                                    <th>পরীক্ষার বিষয়</th>
+                                    <th class="text-center">স্কোর</th>
+                                    <th class="text-center">সঠিক / ভুল</th>
+                                    <th class="text-center">স্ট্যাটাস</th>
+                                    <th class="text-end">অ্যাকশন</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var r in Model.PastExamResults)
+                                {
+                                    <tr>
+                                        <td>
+                                            <div class="fw-semibold">@r.CompletedAt.ToString("dd MMM yyyy")</div>
+                                            <small class="text-muted">@r.CompletedAt.ToString("hh:mm tt")</small>
+                                        </td>
+                                        <td>
+                                            <div class="fw-semibold">@r.ExamTitle</div>
+                                            <small class="text-muted">@r.TotalQuestions টি প্রশ্ন | @(r.TimeTakenSeconds / 60)m @(r.TimeTakenSeconds % 60)s</small>
+                                        </td>
+                                        <td class="text-center fw-bold font-monospace" style="font-size:14px;">
+                                            @r.TotalScore / @r.TotalQuestions
+                                            <div class="small fw-normal text-muted">(@r.Percentage%)</div>
+                                        </td>
+                                        <td class="text-center">
+                                            <span class="text-success fw-bold">✓ @r.CorrectCount</span>
+                                            <span class="text-muted mx-1">|</span>
+                                            <span class="text-danger fw-bold">✗ @r.WrongCount</span>
+                                        </td>
+                                        <td class="text-center">
+                                            @if (r.IsPassed)
+                                            {
+                                                <span class="badge bg-success-subtle text-success border border-success-subtle px-2 py-1" style="font-size:11px;border-radius:6px;">PASSED</span>
+                                            }
+                                            else
+                                            {
+                                                <span class="badge bg-danger-subtle text-danger border border-danger-subtle px-2 py-1" style="font-size:11px;border-radius:6px;">FAILED</span>
+                                            }
+                                        </td>
+                                        <td class="text-end">
+                                            <a asp-action="Result" asp-route-id="@r.Id" class="btn btn-sm btn-outline-secondary" style="border-radius:6px;font-size:11.5px;">
+                                                রিভিউ <i class="bi bi-arrow-right"></i>
+                                            </a>
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+</div>

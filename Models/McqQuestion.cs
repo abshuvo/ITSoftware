@@ -37,6 +37,12 @@ namespace ITSoftware.Models
         [MaxLength(150)]
         public string? Tag { get; set; }
 
+        public bool IsBookmarked { get; set; } = false;
+
+        public bool IsSolved { get; set; } = false;
+
+        public int WrongCount { get; set; } = 0;
+
         public DateTime CreatedAt { get; set; } = DateTime.Now;
 
         [System.ComponentModel.DataAnnotations.Schema.NotMapped]

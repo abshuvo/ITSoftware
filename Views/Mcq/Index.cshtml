@@ -442,13 +442,18 @@
                                 <span class="badge bg-white text-dark border fw-normal" style="font-size:11px; padding: 2px 6px;">@q.Tag</span>
                             }
                         </div>
-                        <form asp-action="Delete" asp-controller="Mcq" method="post" onsubmit="return confirm('মুছে ফেলতে চান?')" class="m-0">
-                            @Html.AntiForgeryToken()
-                            <input type="hidden" name="id" value="@q.Id" />
-                            <button type="submit" class="btn btn-sm btn-link text-muted p-0" title="মুছে ফেলুন" style="font-size:12px;">
-                                <i class="bi bi-trash"></i>
+                        <div class="d-flex align-items-center gap-2">
+                            <button type="button" class="btn btn-sm btn-link p-0 text-decoration-none" onclick="toggleMcqBookmarkAjax(@q.Id, this)" title="বুকমার্ক করুন">
+                                <i class="bi @(q.IsBookmarked ? "bi-star-fill text-warning" : "bi-star text-muted")" style="font-size:14px;"></i>
                             </button>
-                        </form>
+                            <form asp-action="Delete" asp-controller="Mcq" method="post" onsubmit="return confirm('মুছে ফেলতে চান?')" class="m-0">
+                                @Html.AntiForgeryToken()
+                                <input type="hidden" name="id" value="@q.Id" />
+                                <button type="submit" class="btn btn-sm btn-link text-muted p-0" title="মুছে ফেলুন" style="font-size:12px;">
+                                    <i class="bi bi-trash"></i>
+                                </button>
+                            </form>
+                        </div>
                     </div>
 
                     <!-- Question -->
@@ -707,6 +712,23 @@
                     group.style.display = 'none';
                 }
             });
+        }
+
+        async function toggleMcqBookmarkAjax(id, btn) {
+            try {
+                const res = await fetch(`/Bookmark/ToggleMcqBookmark?id=${id}`, { method: 'POST' });
+                const data = await res.json();
+                if (data.success) {
+                    const icon = btn.querySelector('i');
+                    if (data.isBookmarked) {
+                        icon.className = 'bi bi-star-fill text-warning';
+                    } else {
+                        icon.className = 'bi bi-star text-muted';
+                    }
+                }
+            } catch (err) {
+                console.error('Error toggling MCQ bookmark', err);
+            }
         }
     </script>
 }

@@ -386,10 +386,141 @@ namespace ITSoftware.Controllers
                 WrongQuestions = wrongQuestions,
                 Category = session.Category
             };
-            await _goalService.LogActivityAsync( activityType: "MCQ", count: session.QuestionIds.Count, description: $"Quiz — {session.CorrectCount}/{session.QuestionIds.Count} সঠিক", referenceId: null);
+
+            // Log wrong questions into McqMistakes table
+            foreach (var wId in session.WrongIds)
+            {
+                var existingMistake = await _context.McqMistakes.FirstOrDefaultAsync(m => m.McqQuestionId == wId && !m.IsResolved);
+                if (existingMistake != null)
+                {
+                    existingMistake.WrongAttemptCount++;
+                    existingMistake.LastAttemptedAt = DateTime.Now;
+                }
+                else
+                {
+                    _context.McqMistakes.Add(new McqMistake
+                    {
+                        McqQuestionId = wId,
+                        WrongAttemptCount = 1,
+                        IsResolved = false,
+                        LastAttemptedAt = DateTime.Now,
+                        CreatedAt = DateTime.Now
+                    });
+                }
+            }
+            await _context.SaveChangesAsync();
+
+            await _goalService.LogActivityAsync(activityType: "MCQ", count: session.QuestionIds.Count, description: $"Quiz — {session.CorrectCount}/{session.QuestionIds.Count} সঠিক", referenceId: null);
             // Session clear করো
             HttpContext.Session.Remove(SessionKey);
             return View(vm);
+        }
+
+        // ══════════════════════════════
+        //  Mistake Bank — View & Practice
+        // ══════════════════════════════
+        public async Task<IActionResult> MistakeBank(string? category, string? search)
+        {
+            var query = _context.McqMistakes
+                .Include(m => m.McqQuestion)
+                .Where(m => !m.IsResolved && m.McqQuestion != null)
+                .AsQueryable();
+
+            if (!string.IsNullOrEmpty(category) && category != "All")
+            {
+                query = query.Where(m => m.McqQuestion!.Category == category);
+            }
+
+            if (!string.IsNullOrEmpty(search))
+            {
+                query = query.Where(m => m.McqQuestion!.QuestionText.Contains(search) || (m.McqQuestion.Explanation != null && m.McqQuestion.Explanation.Contains(search)));
+            }
+
+            var mistakes = await query
+                .OrderByDescending(m => m.WrongAttemptCount)
+                .ThenByDescending(m => m.LastAttemptedAt)
+                .ToListAsync();
+
+            var categories = await _context.McqMistakes
+                .Include(m => m.McqQuestion)
+                .Where(m => !m.IsResolved && m.McqQuestion != null && !string.IsNullOrEmpty(m.McqQuestion.Category))
+                .Select(m => m.McqQuestion!.Category!)
+                .Distinct()
+                .OrderBy(c => c)
+                .ToListAsync();
+
+            ViewBag.ActiveCategory = category ?? "All";
+            ViewBag.SearchQuery = search;
+            ViewBag.Categories = categories;
+            ViewBag.TotalMistakes = mistakes.Count;
+
+            return View(mistakes);
+        }
+
+        // ══════════════════════════════
+        //  Resolve Mistake (AJAX)
+        // ══════════════════════════════
+        [HttpPost]
+        public async Task<IActionResult> ResolveMistake(int id)
+        {
+            var mistake = await _context.McqMistakes.FindAsync(id);
+            if (mistake == null)
+            {
+                return Json(new { success = false, message = "Mistake record not found" });
+            }
+
+            mistake.IsResolved = true;
+            await _context.SaveChangesAsync();
+
+            var remaining = await _context.McqMistakes.CountAsync(m => !m.IsResolved);
+
+            return Json(new
+            {
+                success = true,
+                remaining = remaining
+            });
+        }
+
+        // ══════════════════════════════
+        //  Toggle MCQ Bookmark (AJAX)
+        // ══════════════════════════════
+        [HttpPost]
+        public async Task<IActionResult> ToggleBookmark(int id)
+        {
+            var q = await _context.McqQuestions.FindAsync(id);
+            if (q == null)
+            {
+                return Json(new { success = false, message = "Question not found" });
+            }
+
+            q.IsBookmarked = !q.IsBookmarked;
+            await _context.SaveChangesAsync();
+
+            var totalBookmarked = await _context.McqQuestions.CountAsync(x => x.IsBookmarked);
+
+            return Json(new
+            {
+                success = true,
+                isBookmarked = q.IsBookmarked,
+                totalBookmarked = totalBookmarked
+            });
+        }
+
+        // ══════════════════════════════
+        //  Clear All Resolved Mistakes
+        // ══════════════════════════════
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> ClearAllMistakes()
+        {
+            var activeMistakes = await _context.McqMistakes.Where(m => !m.IsResolved).ToListAsync();
+            foreach (var m in activeMistakes)
+            {
+                m.IsResolved = true;
+            }
+            await _context.SaveChangesAsync();
+
+            return RedirectToAction("MistakeBank");
         }
 
         // ══════════════════════════════
@@ -407,7 +538,6 @@ namespace ITSoftware.Controllers
             return json == null ? null
                 : JsonSerializer.Deserialize<QuizSessionViewModel>(json);
         }
-
 
         private static int GetCategorySortOrder(string cat) => cat switch
         {
