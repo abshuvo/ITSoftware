@@ -1,0 +1,1145 @@
+@model ITSoftware.Models.ViewModels.PreviousYearQuestionIndexViewModel
+@{
+    ViewData["Title"] = "Previous Year Questions";
+    ViewData["Subtitle"] = "ব্যাংক আইটি পরীক্ষার বিগত সালের প্রশ্নব্যাংক (২০২০–২০২৬)";
+
+    var currentCatSummary = Model.CategorySummaries.FirstOrDefault(c => c.Category == Model.ActiveCategory);
+}
+
+@section Styles {
+    <style>
+        .pyq-layout {
+            display: grid;
+            grid-template-columns: 290px 1fr;
+            gap: 20px;
+            align-items: start;
+        }
+
+        @@media (max-width: 992px) {
+            .pyq-layout {
+                grid-template-columns: 1fr;
+            }
+            .pyq-sidebar {
+                display: none;
+            }
+            .mob-cat-scroll {
+                display: flex !important;
+            }
+        }
+
+        /* ── Sidebar ── */
+        .pyq-sidebar {
+            background: #fff;
+            border: 1px solid #e8e7e2;
+            border-radius: 12px;
+            overflow: hidden;
+            position: sticky;
+            top: 80px;
+            box-shadow: 0 2px 8px rgba(0,0,0,.03);
+        }
+
+        .pyq-sidebar-header {
+            padding: 14px 16px;
+            border-bottom: 1px solid #f0f0ee;
+            font-size: 12px;
+            font-weight: 700;
+            color: #888;
+            letter-spacing: .06em;
+            text-transform: uppercase;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .pyq-cat-list {
+            max-height: calc(100vh - 200px);
+            overflow-y: auto;
+        }
+
+        .pyq-cat-item {
+            display: flex;
+            align-items: center;
+            padding: 9px 14px;
+            font-size: 12.5px;
+            color: #444;
+            text-decoration: none;
+            border-left: 3px solid transparent;
+            transition: all .15s;
+            gap: 8px;
+        }
+
+        .pyq-cat-item:hover {
+            background: #f8f8f6;
+            color: #1a1a1a;
+        }
+
+        .pyq-cat-item.active {
+            background: var(--primary-lt);
+            color: var(--primary);
+            border-left-color: var(--primary);
+            font-weight: 600;
+        }
+
+        .pyq-cat-badge {
+            margin-left: auto;
+            font-size: 11px;
+            background: #f0f0ee;
+            color: #777;
+            padding: 2px 7px;
+            border-radius: 10px;
+            font-weight: 600;
+        }
+
+        .pyq-cat-item.active .pyq-cat-badge {
+            background: var(--primary-md);
+            color: var(--primary);
+        }
+
+        .pyq-priority-pill {
+            font-size: 9.5px;
+            padding: 1px 5px;
+            border-radius: 4px;
+            font-weight: 700;
+            text-transform: uppercase;
+        }
+        .priority-critical { background: #FDE8E8; color: #9B1C1C; }
+        .priority-high     { background: #FEF08A; color: #713F12; }
+        .priority-medium   { background: #E1F5EE; color: #085041; }
+        .priority-low      { background: #F3F4F6; color: #4B5563; }
+
+        /* ── Top Stats Strip ── */
+        .stats-strip {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+
+        .stat-mini-card {
+            background: #fff;
+            border: 1px solid #e8e7e2;
+            border-radius: 10px;
+            padding: 12px 14px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .stat-mini-icon {
+            width: 38px;
+            height: 38px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 17px;
+            flex-shrink: 0;
+        }
+
+        .stat-mini-val {
+            font-size: 18px;
+            font-weight: 700;
+            line-height: 1.1;
+            color: #1a1a1a;
+        }
+
+        .stat-mini-lbl {
+            font-size: 11px;
+            color: #888;
+        }
+
+        /* ── Filter Card ── */
+        .filter-panel {
+            background: #fff;
+            border: 1px solid #e8e7e2;
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 18px;
+        }
+
+        .filter-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .search-input-wrap {
+            flex: 1 1 240px;
+            position: relative;
+        }
+
+        .search-input-wrap input {
+            width: 100%;
+            padding: 8px 12px 8px 34px;
+            border: 1px solid #e8e7e2;
+            border-radius: 8px;
+            font-size: 13px;
+            outline: none;
+            transition: border-color .15s;
+        }
+
+        .search-input-wrap input:focus {
+            border-color: var(--primary);
+        }
+
+        .search-input-wrap i {
+            position: absolute;
+            left: 11px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #aaa;
+            font-size: 13px;
+        }
+
+        .filter-select {
+            padding: 8px 12px;
+            border: 1px solid #e8e7e2;
+            border-radius: 8px;
+            font-size: 13px;
+            background: #fff;
+            color: #444;
+            outline: none;
+            cursor: pointer;
+            min-width: 130px;
+        }
+
+        .filter-select:focus {
+            border-color: var(--primary);
+        }
+
+        .status-tab-btn {
+            font-size: 12px;
+            padding: 6px 14px;
+            border-radius: 20px;
+            border: 1px solid #e8e7e2;
+            background: #fff;
+            color: #555;
+            text-decoration: none;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            font-weight: 500;
+            transition: all .15s;
+        }
+
+        .status-tab-btn:hover {
+            background: #f5f5f3;
+            color: #1a1a1a;
+        }
+
+        .status-tab-btn.active {
+            background: var(--primary);
+            color: #fff;
+            border-color: var(--primary);
+            font-weight: 600;
+        }
+
+        /* ── Question Card ── */
+        .q-card {
+            background: #fff;
+            border: 1px solid #e8e7e2;
+            border-radius: 12px;
+            padding: 16px 18px;
+            margin-bottom: 14px;
+            transition: box-shadow .15s, border-color .15s;
+            position: relative;
+        }
+
+        .q-card:hover {
+            box-shadow: 0 4px 14px rgba(0,0,0,.06);
+            border-color: #d8d6f0;
+        }
+
+        .q-card.solved-card {
+            border-left: 4px solid var(--teal);
+            background: #fafdfc;
+        }
+
+        .q-card.bookmarked-card {
+            border-left: 4px solid var(--amber);
+        }
+
+        .q-card.solved-card.bookmarked-card {
+            border-left: 4px solid var(--teal);
+        }
+
+        .q-header {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 10px;
+        }
+
+        .q-no-badge {
+            background: #f0f0ee;
+            color: #555;
+            font-size: 11px;
+            font-weight: 700;
+            padding: 3px 8px;
+            border-radius: 6px;
+        }
+
+        .q-cat-tag {
+            font-size: 11px;
+            font-weight: 600;
+            color: var(--primary);
+            background: var(--primary-lt);
+            padding: 3px 8px;
+            border-radius: 6px;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .q-year-tag {
+            font-size: 11px;
+            font-weight: 600;
+            color: #1a1a1a;
+            background: #FAEEDA;
+            color: #8D5408;
+            padding: 3px 8px;
+            border-radius: 6px;
+        }
+
+        .q-exam-tag {
+            font-size: 11px;
+            color: #4b5563;
+            background: #f3f4f6;
+            padding: 3px 8px;
+            border-radius: 6px;
+        }
+
+        .q-post-tag {
+            font-size: 11px;
+            color: #0c4a6e;
+            background: #e0f2fe;
+            padding: 3px 8px;
+            border-radius: 6px;
+            font-weight: 500;
+        }
+
+        .q-text {
+            font-size: 14px;
+            line-height: 1.6;
+            color: #1f2937;
+            margin-bottom: 12px;
+            white-space: pre-wrap;
+            word-break: break-word;
+            font-weight: 500;
+        }
+
+        .q-notes-box {
+            background: #FFFBEB;
+            border: 1px dashed #FCD34D;
+            border-radius: 8px;
+            padding: 10px 14px;
+            font-size: 12.5px;
+            color: #92400E;
+            margin-bottom: 12px;
+        }
+
+        .q-footer {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 10px;
+            border-top: 1px solid #f0f0ee;
+            padding-top: 10px;
+        }
+
+        .q-actions-left {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .q-action-btn {
+            font-size: 12px;
+            padding: 4px 10px;
+            border-radius: 6px;
+            border: 1px solid #e8e7e2;
+            background: #fff;
+            color: #555;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            transition: all .15s;
+            text-decoration: none;
+        }
+
+        .q-action-btn:hover {
+            background: #f5f5f3;
+            color: #111;
+        }
+
+        .q-action-btn.btn-solved-active {
+            background: var(--teal-lt);
+            color: var(--teal);
+            border-color: #A3E0C8;
+            font-weight: 600;
+        }
+
+        .q-action-btn.btn-bookmark-active {
+            background: #FEF3C7;
+            color: #D97706;
+            border-color: #FDE68A;
+            font-weight: 600;
+        }
+
+        /* Mobile Categories Horizontal Scroll */
+        .mob-cat-scroll {
+            display: none;
+            overflow-x: auto;
+            white-space: nowrap;
+            gap: 6px;
+            padding-bottom: 10px;
+            margin-bottom: 14px;
+        }
+
+        .mob-cat-pill {
+            display: inline-block;
+            font-size: 12px;
+            padding: 6px 12px;
+            border-radius: 20px;
+            text-decoration: none;
+            border: 1px solid #e8e7e2;
+            background: #fff;
+            color: #555;
+        }
+
+        .mob-cat-pill.active {
+            background: var(--primary);
+            color: #fff;
+            border-color: var(--primary);
+            font-weight: 600;
+        }
+
+        /* Empty state */
+        .pyq-empty {
+            text-align: center;
+            padding: 60px 20px;
+            color: #888;
+            background: #fff;
+            border-radius: 12px;
+            border: 1px solid #e8e7e2;
+        }
+
+        .pyq-empty i {
+            font-size: 48px;
+            color: #ccc;
+            margin-bottom: 12px;
+            display: block;
+        }
+    </style>
+}
+
+@* ── Alerts ── *@
+@if (TempData["Success"] != null)
+{
+    <div class="alert mb-3" style="background:#E1F5EE;border:1px solid #5DCAA5;border-radius:10px;color:#085041;font-size:13px;">
+        <i class="bi bi-check-circle-fill me-1"></i>
+        @TempData["Success"]
+    </div>
+}
+@if (TempData["Error"] != null)
+{
+    <div class="alert mb-3" style="background:#FAECE7;border:1px solid #F0997B;border-radius:10px;color:#712B13;font-size:13px;">
+        <i class="bi bi-exclamation-circle-fill me-1"></i>
+        @TempData["Error"]
+    </div>
+}
+
+<!-- ══ Stats Strip ══ -->
+<div class="stats-strip">
+    <div class="stat-mini-card">
+        <div class="stat-mini-icon" style="background:var(--primary-lt);color:var(--primary);">
+            <i class="bi bi-collection-play"></i>
+        </div>
+        <div>
+            <div class="stat-mini-val" id="top-total-count">@Model.TotalCount</div>
+            <div class="stat-mini-lbl">মোট প্রশ্নব্যাংক</div>
+        </div>
+    </div>
+    <div class="stat-mini-card">
+        <div class="stat-mini-icon" style="background:var(--teal-lt);color:var(--teal);">
+            <i class="bi bi-check2-circle"></i>
+        </div>
+        <div>
+            <div class="stat-mini-val" id="top-solved-count" style="color:var(--teal);">@Model.SolvedCount</div>
+            <div class="stat-mini-lbl">সমাধান করা হয়েছে</div>
+        </div>
+    </div>
+    <div class="stat-mini-card">
+        <div class="stat-mini-icon" style="background:#FEF3C7;color:#D97706;">
+            <i class="bi bi-star-fill"></i>
+        </div>
+        <div>
+            <div class="stat-mini-val" id="top-bookmarked-count" style="color:#D97706;">@Model.BookmarkedCount</div>
+            <div class="stat-mini-lbl">বুকমার্ক / স্টার</div>
+        </div>
+    </div>
+    <div class="stat-mini-card">
+        <div class="stat-mini-icon" style="background:#E0F2FE;color:#0284C7;">
+            <i class="bi bi-layers"></i>
+        </div>
+        <div>
+            <div class="stat-mini-val" style="color:#0284C7;">14</div>
+            <div class="stat-mini-lbl">টপিক / বিষয়</div>
+        </div>
+    </div>
+    <div class="stat-mini-card">
+        <div class="stat-mini-icon" style="background:#FAECE7;color:#993C1D;">
+            <i class="bi bi-calendar-range"></i>
+        </div>
+        <div>
+            <div class="stat-mini-val" style="color:#993C1D;">2020–2026</div>
+            <div class="stat-mini-lbl">৭ বছরের প্রশ্ন</div>
+        </div>
+    </div>
+</div>
+
+<!-- ══ Mobile Category Pills ══ -->
+<div class="mob-cat-scroll">
+    <a asp-action="Index"
+       asp-route-category=""
+       asp-route-year="@Model.ActiveYear"
+       asp-route-examOrg="@Model.ActiveExamOrg"
+       asp-route-post="@Model.ActivePost"
+       asp-route-status="@Model.ActiveStatus"
+       class="mob-cat-pill @(string.IsNullOrEmpty(Model.ActiveCategory) ? "active" : "")">
+        সব টপিক (@Model.TotalCount)
+    </a>
+    @foreach (var s in Model.CategorySummaries)
+    {
+        <a asp-action="Index"
+           asp-route-category="@s.Category"
+           asp-route-year="@Model.ActiveYear"
+           asp-route-examOrg="@Model.ActiveExamOrg"
+           asp-route-post="@Model.ActivePost"
+           asp-route-status="@Model.ActiveStatus"
+           class="mob-cat-pill @(Model.ActiveCategory == s.Category ? "active" : "")">
+            @s.Category (@s.TotalQuestions)
+        </a>
+    }
+</div>
+
+<!-- ══ Main Layout ══ -->
+<div class="pyq-layout">
+
+    <!-- ── LEFT: Category Sidebar ── -->
+    <aside class="pyq-sidebar">
+        <div class="pyq-sidebar-header">
+            <span>ক্যাটাগরি সমূহ</span>
+            <a asp-action="Summary" style="font-size:11px;color:var(--primary);text-decoration:none;font-weight:600;">
+                অ্যানালিটিক্স →
+            </a>
+        </div>
+
+        <div class="pyq-cat-list">
+            <a asp-action="Index"
+               asp-route-category=""
+               asp-route-year="@Model.ActiveYear"
+               asp-route-examOrg="@Model.ActiveExamOrg"
+               asp-route-post="@Model.ActivePost"
+               asp-route-status="@Model.ActiveStatus"
+               class="pyq-cat-item @(string.IsNullOrEmpty(Model.ActiveCategory) ? "active" : "")">
+                <i class="bi bi-grid-3x3-gap"></i>
+                <span>সব প্রশ্ন</span>
+                <span class="pyq-cat-badge">@Model.TotalCount</span>
+            </a>
+
+            @foreach (var cat in Model.CategorySummaries)
+            {
+                var isActive = Model.ActiveCategory == cat.Category ? "active" : "";
+                var pClass = cat.Priority.ToLower() switch
+                {
+                    "critical" => "priority-critical",
+                    "high" => "priority-high",
+                    "medium" => "priority-medium",
+                    _ => "priority-low"
+                };
+
+                <a asp-action="Index"
+                   asp-route-category="@cat.Category"
+                   asp-route-year="@Model.ActiveYear"
+                   asp-route-examOrg="@Model.ActiveExamOrg"
+                   asp-route-post="@Model.ActivePost"
+                   asp-route-status="@Model.ActiveStatus"
+                   class="pyq-cat-item @isActive"
+                   title="@cat.Category (@cat.Percentage)">
+                    <i class="bi @cat.Icon" style="width:16px;"></i>
+                    <div style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">
+                        <div>@cat.Order. @cat.Category</div>
+                    </div>
+                    <span class="pyq-priority-pill @pClass">@cat.Priority</span>
+                    <span class="pyq-cat-badge">@cat.TotalQuestions</span>
+                </a>
+            }
+        </div>
+
+        <div style="padding:12px 16px;border-top:1px solid #f0f0ee;background:#fafaf8;display:flex;justify-content:space-between;align-items:center;">
+            <button class="btn btn-sm btn-outline-primary" style="font-size:11px;border-radius:6px;" data-bs-toggle="modal" data-bs-target="#addQuestionModal">
+                <i class="bi bi-plus-lg me-1"></i>প্রশ্ন যোগ করুন
+            </button>
+            <form asp-action="ResetData" method="post" onsubmit="return confirm('আপনি কি নিশ্চিত যে সকল ৪১৪টি প্রশ্ন পুনরায় লোড করতে চান?')">
+                @Html.AntiForgeryToken()
+                <button type="submit" class="btn btn-sm btn-link text-muted p-0" style="font-size:11px;text-decoration:none;">
+                    <i class="bi bi-arrow-clockwise"></i> রিসেট
+                </button>
+            </form>
+        </div>
+    </aside>
+
+    <!-- ── RIGHT: Filters & Questions List ── -->
+    <main>
+
+        <!-- Filter Panel -->
+        <div class="filter-panel">
+            <form asp-action="Index" method="get" id="filterForm">
+                @if (!string.IsNullOrEmpty(Model.ActiveCategory))
+                {
+                    <input type="hidden" name="category" value="@Model.ActiveCategory" />
+                }
+
+                <div class="filter-row mb-3">
+                    <!-- Search Input -->
+                    <div class="search-input-wrap">
+                        <i class="bi bi-search"></i>
+                        <input type="text" name="search" value="@Model.SearchQuery" placeholder="প্রশ্ন, বিষয়, পদবী বা কী-ওয়ার্ড দিয়ে খুঁজুন..." />
+                    </div>
+
+                    <!-- Year Dropdown -->
+                    <select name="year" class="filter-select" onchange="document.getElementById('filterForm').submit()">
+                        <option value="">সকল সাল (২০২০-২৬)</option>
+                        @foreach (var y in Model.Years)
+                        {
+                            <option value="@y" selected="@(Model.ActiveYear == y)">@y সাল</option>
+                        }
+                    </select>
+
+                    <!-- Exam / Organisation Dropdown -->
+                    <select name="examOrg" class="filter-select" onchange="document.getElementById('filterForm').submit()" style="max-width:200px;">
+                        <option value="">সকল পরীক্ষা / ব্যাংক</option>
+                        @foreach (var e in Model.ExamOrgs)
+                        {
+                            <option value="@e" selected="@(Model.ActiveExamOrg == e)">@e</option>
+                        }
+                    </select>
+
+                    <!-- Post Dropdown -->
+                    <select name="post" class="filter-select" onchange="document.getElementById('filterForm').submit()" style="max-width:180px;">
+                        <option value="">সকল পদবী / Post</option>
+                        @foreach (var p in Model.Posts)
+                        {
+                            <option value="@p" selected="@(Model.ActivePost == p)">@p</option>
+                        }
+                    </select>
+
+                    <button type="submit" class="btn btn-primary btn-sm" style="padding:8px 16px;border-radius:8px;font-size:13px;">
+                        ফিল্টার
+                    </button>
+
+                    @if (!string.IsNullOrEmpty(Model.SearchQuery) || Model.ActiveYear.HasValue || !string.IsNullOrEmpty(Model.ActiveExamOrg) || !string.IsNullOrEmpty(Model.ActivePost) || !string.IsNullOrEmpty(Model.ActiveCategory) || Model.ActiveStatus != "all")
+                    {
+                        <a asp-action="Index" class="btn btn-outline-secondary btn-sm" style="padding:8px 14px;border-radius:8px;font-size:13px;" title="রিসেট ফিল্টার">
+                            <i class="bi bi-x-lg"></i>
+                        </a>
+                    }
+                </div>
+
+                <!-- Status Pills -->
+                <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 pt-2 border-top">
+                    <div class="d-flex align-items-center gap-2 flex-wrap">
+                        <span style="font-size:12px;font-weight:600;color:#666;">স্ট্যাটাস:</span>
+                        <a asp-action="Index"
+                           asp-route-category="@Model.ActiveCategory"
+                           asp-route-year="@Model.ActiveYear"
+                           asp-route-examOrg="@Model.ActiveExamOrg"
+                           asp-route-post="@Model.ActivePost"
+                           asp-route-search="@Model.SearchQuery"
+                           asp-route-status="all"
+                           class="status-tab-btn @(Model.ActiveStatus == "all" ? "active" : "")">
+                            সবগুলো
+                        </a>
+                        <a asp-action="Index"
+                           asp-route-category="@Model.ActiveCategory"
+                           asp-route-year="@Model.ActiveYear"
+                           asp-route-examOrg="@Model.ActiveExamOrg"
+                           asp-route-post="@Model.ActivePost"
+                           asp-route-search="@Model.SearchQuery"
+                           asp-route-status="unsolved"
+                           class="status-tab-btn @(Model.ActiveStatus == "unsolved" ? "active" : "")">
+                            <i class="bi bi-circle"></i> বাকি আছে
+                        </a>
+                        <a asp-action="Index"
+                           asp-route-category="@Model.ActiveCategory"
+                           asp-route-year="@Model.ActiveYear"
+                           asp-route-examOrg="@Model.ActiveExamOrg"
+                           asp-route-post="@Model.ActivePost"
+                           asp-route-search="@Model.SearchQuery"
+                           asp-route-status="solved"
+                           class="status-tab-btn @(Model.ActiveStatus == "solved" ? "active" : "")">
+                            <i class="bi bi-check2-circle text-success"></i> সমাধানকৃত
+                        </a>
+                        <a asp-action="Index"
+                           asp-route-category="@Model.ActiveCategory"
+                           asp-route-year="@Model.ActiveYear"
+                           asp-route-examOrg="@Model.ActiveExamOrg"
+                           asp-route-post="@Model.ActivePost"
+                           asp-route-search="@Model.SearchQuery"
+                           asp-route-status="bookmarked"
+                           class="status-tab-btn @(Model.ActiveStatus == "bookmarked" ? "active" : "")">
+                            <i class="bi bi-star-fill text-warning"></i> বুকমার্ক ⭐
+                        </a>
+                    </div>
+
+                    <div style="font-size:12.5px;color:#777;">
+                        দেখাচ্ছে: <strong style="color:var(--primary);">@Model.Questions.Count</strong> টি প্রশ্ন
+                    </div>
+                </div>
+            </form>
+        </div>
+
+        <!-- Active Category Header Banner if single category selected -->
+        @if (currentCatSummary != null)
+        {
+            <div class="mb-3 p-3 bg-white rounded-3 border d-flex align-items-center justify-content-between flex-wrap gap-2">
+                <div class="d-flex align-items-center gap-3">
+                    <div style="width:42px;height:42px;background:var(--primary-lt);color:var(--primary);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:20px;">
+                        <i class="bi @currentCatSummary.Icon"></i>
+                    </div>
+                    <div>
+                        <h6 class="mb-0 fw-bold">@currentCatSummary.Category</h6>
+                        <small class="text-muted">
+                            মোট প্রশ্ন: @currentCatSummary.TotalQuestions টি (@currentCatSummary.Percentage) &bull; অগ্রাধিকার:
+                            <span class="badge @(currentCatSummary.Priority == "Critical" ? "bg-danger" : currentCatSummary.Priority == "High" ? "bg-warning text-dark" : "bg-info text-dark")">
+                                @currentCatSummary.Priority (@(new string('★', currentCatSummary.StarRating)))
+                            </span>
+                        </small>
+                    </div>
+                </div>
+                <div class="d-flex align-items-center gap-2">
+                    <span style="font-size:12px;color:#888;">ক্যাটাগরি প্রগ্রেস:</span>
+                    <div class="progress" style="width:120px;height:8px;border-radius:4px;">
+                        <div class="progress-bar bg-success" style="width: @(currentCatSummary.ProgressPercent)%"></div>
+                    </div>
+                    <span style="font-size:12px;font-weight:700;color:var(--teal);">@(currentCatSummary.ProgressPercent)%</span>
+                </div>
+            </div>
+        }
+
+        <!-- ── Questions List ── -->
+        @if (!Model.Questions.Any())
+        {
+            <div class="pyq-empty">
+                <i class="bi bi-patch-question"></i>
+                <h5 class="fw-bold">কোনো প্রশ্ন পাওয়া যায়নি</h5>
+                <p style="font-size:13px;">আপনার ফিল্টারের সাথে মিলে এমন কোনো বিগত সালের প্রশ্ন পাওয়া যায়নি। ফিল্টার পরিবর্তন করে চেষ্টা করুন।</p>
+                <a asp-action="Index" class="btn btn-outline-primary btn-sm mt-2">
+                    সকল প্রশ্ন দেখুন
+                </a>
+            </div>
+        }
+        else
+        {
+            <div class="questions-container">
+                @foreach (var q in Model.Questions)
+                {
+                    var solvedClass = q.IsSolved ? "solved-card" : "";
+                    var bookmarkClass = q.IsBookmarked ? "bookmarked-card" : "";
+
+                    <div class="q-card @solvedClass @bookmarkClass" id="qcard-@q.Id">
+                        <!-- Top Meta Header -->
+                        <div class="q-header">
+                            <span class="q-no-badge">#@(q.QuestionNo > 0 ? q.QuestionNo : q.Id)</span>
+                            <span class="q-cat-tag">
+                                <i class="bi bi-folder2"></i> @q.Category
+                            </span>
+                            <span class="q-year-tag">
+                                <i class="bi bi-calendar3"></i> @q.Year
+                            </span>
+                            <span class="q-exam-tag" title="Exam / Organisation">
+                                <i class="bi bi-bank"></i> @q.ExamOrg
+                            </span>
+                            <span class="q-post-tag" title="Post / Designation">
+                                <i class="bi bi-person-badge"></i> @q.Post
+                            </span>
+                        </div>
+
+                        <!-- Question Text -->
+                        <div class="q-text" id="qtext-@q.Id">@q.QuestionText</div>
+
+                        <!-- User Notes / Solution Box (if any) -->
+                        <div class="q-notes-box" id="qnotes-@q.Id" style="@(string.IsNullOrEmpty(q.UserNotes) ? "display:none;" : "")">
+                            <div class="d-flex align-items-center justify-content-between mb-1">
+                                <strong style="font-size:11px;text-transform:uppercase;letter-spacing:0.04em;">
+                                    <i class="bi bi-journal-check me-1"></i>আপনার নোট / সমাধান
+                                </strong>
+                                <button type="button" class="btn btn-sm btn-link p-0 text-muted" onclick="openNoteModal(@q.Id, '@Html.Raw(System.Web.HttpUtility.JavaScriptStringEncode(q.UserNotes ?? ""))')" style="font-size:11px;text-decoration:none;">
+                                    <i class="bi bi-pencil"></i> এডিট
+                                </button>
+                            </div>
+                            <div class="notes-content" id="qnotes-content-@q.Id">@q.UserNotes</div>
+                        </div>
+
+                        <!-- Bottom Actions -->
+                        <div class="q-footer">
+                            <div class="q-actions-left">
+                                <!-- Solved Toggle Button -->
+                                <button type="button"
+                                        class="q-action-btn @(q.IsSolved ? "btn-solved-active" : "")"
+                                        id="btn-solved-@q.Id"
+                                        onclick="toggleSolved(@q.Id)">
+                                    <i class="bi @(q.IsSolved ? "bi-check-circle-fill text-success" : "bi-circle")"></i>
+                                    <span id="txt-solved-@q.Id">@(q.IsSolved ? "সমাধান হয়েছে" : "বাকি আছে")</span>
+                                </button>
+
+                                <!-- Bookmark Toggle Button -->
+                                <button type="button"
+                                        class="q-action-btn @(q.IsBookmarked ? "btn-bookmark-active" : "")"
+                                        id="btn-bookmark-@q.Id"
+                                        onclick="toggleBookmark(@q.Id)">
+                                    <i class="bi @(q.IsBookmarked ? "bi-star-fill text-warning" : "bi-star")"></i>
+                                    <span>বুকমার্ক</span>
+                                </button>
+
+                                <!-- Note Button -->
+                                <button type="button"
+                                        class="q-action-btn"
+                                        onclick="openNoteModal(@q.Id, document.getElementById('qnotes-content-@q.Id')?.innerText || '')">
+                                    <i class="bi bi-pencil-square"></i>
+                                    <span>নোট / উত্তর লিখুন</span>
+                                </button>
+
+                                <!-- Copy Question Button -->
+                                <button type="button"
+                                        class="q-action-btn"
+                                        onclick="copyQuestion(@q.Id)"
+                                        id="copy-btn-@q.Id"
+                                        title="প্রশ্ন কপি করুন">
+                                    <i class="bi bi-clipboard"></i>
+                                    <span>কপি</span>
+                                </button>
+                            </div>
+
+                            <div class="d-flex align-items-center gap-1">
+                                <!-- Edit Button -->
+                                <button type="button"
+                                        class="btn btn-sm btn-link text-muted p-1"
+                                        onclick="openEditModal(@q.Id, '@Html.Raw(System.Web.HttpUtility.JavaScriptStringEncode(q.Category))', @q.CategoryOrder, @q.QuestionNo, @q.Year, '@Html.Raw(System.Web.HttpUtility.JavaScriptStringEncode(q.ExamOrg))', '@Html.Raw(System.Web.HttpUtility.JavaScriptStringEncode(q.Post))', '@Html.Raw(System.Web.HttpUtility.JavaScriptStringEncode(q.QuestionText))')"
+                                        title="এডিট">
+                                    <i class="bi bi-pencil"></i>
+                                </button>
+
+                                <!-- Delete Form -->
+                                <form asp-action="Delete" method="post" onsubmit="return confirm('এই প্রশ্নটি মুছে ফেলতে চান?')">
+                                    @Html.AntiForgeryToken()
+                                    <input type="hidden" name="id" value="@q.Id" />
+                                    <input type="hidden" name="returnCategory" value="@Model.ActiveCategory" />
+                                    <button type="submit" class="btn btn-sm btn-link text-danger p-1" title="মুছে ফেলুন">
+                                        <i class="bi bi-trash"></i>
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                }
+            </div>
+        }
+
+    </main>
+</div>
+
+<!-- ══════════════════════════════════════════ -->
+<!--  Modal: Add Question (Manual)              -->
+<!-- ══════════════════════════════════════════ -->
+<div class="modal fade" id="addQuestionModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content" style="border-radius:14px;">
+            <div class="modal-header border-0 pb-0">
+                <h5 class="modal-title fw-bold">নতুন বিগত সালের প্রশ্ন যোগ করুন</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form asp-action="Add" method="post">
+                @Html.AntiForgeryToken()
+                <div class="modal-body">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label small fw-semibold">টপিক / ক্যাটাগরি *</label>
+                            <input type="text" name="Category" required list="catAddList" class="form-control form-control-sm" placeholder="যেমন: Networking & Data Communication" value="@Model.ActiveCategory" />
+                            <datalist id="catAddList">
+                                @foreach (var c in Model.Categories)
+                                {
+                                    <option value="@c"></option>
+                                }
+                            </datalist>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label small fw-semibold">ক্যাটাগরি ক্রম (Order)</label>
+                            <input type="number" name="CategoryOrder" class="form-control form-control-sm" value="1" min="1" max="50" />
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label small fw-semibold">প্রশ্ন নম্বর</label>
+                            <input type="number" name="QuestionNo" class="form-control form-control-sm" value="1" min="1" />
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label small fw-semibold">সাল (Year) *</label>
+                            <input type="number" name="Year" class="form-control form-control-sm" value="@DateTime.Now.Year" required min="2000" max="2050" />
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label small fw-semibold">পরীক্ষা / সংস্থা *</label>
+                            <input type="text" name="ExamOrg" class="form-control form-control-sm" placeholder="যেমন: Combined 3 Bank (BIBM)" required />
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label small fw-semibold">পদবী / Post *</label>
+                            <input type="text" name="Post" class="form-control form-control-sm" placeholder="যেমন: Senior Officer IT" required />
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label small fw-semibold">প্রশ্ন (Question Text) *</label>
+                            <textarea name="QuestionText" class="form-control" rows="4" placeholder="প্রশ্নের বিবরণ লিখুন..." required></textarea>
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label small fw-semibold">নোট / সমাধান (ঐচ্ছিক)</label>
+                            <textarea name="UserNotes" class="form-control form-control-sm" rows="2" placeholder="আপনার ব্যক্তিগত সমাধান বা রেফারেন্স..."></textarea>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer border-0 pt-0">
+                    <button type="button" class="btn btn-light btn-sm" data-bs-dismiss="modal">বাতিল</button>
+                    <button type="submit" class="btn btn-primary btn-sm px-4">সংরক্ষণ করুন</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- ══════════════════════════════════════════ -->
+<!--  Modal: Note / Solution Modal             -->
+<!-- ══════════════════════════════════════════ -->
+<div class="modal fade" id="noteModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content" style="border-radius:14px;">
+            <div class="modal-header border-0 pb-0">
+                <h5 class="modal-title fw-bold">নোট / সমাধান লিখুন</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="modalNoteQuestionId" />
+                <div class="mb-3">
+                    <label class="form-label small fw-semibold text-muted">আপনার নোট বা সমাধান:</label>
+                    <textarea id="modalNoteText" class="form-control" rows="6" placeholder="এই প্রশ্নের উত্তর, সূত্র, বা গুরুত্বপূর্ণ পয়েন্ট লিখে রাখুন..."></textarea>
+                </div>
+            </div>
+            <div class="modal-footer border-0 pt-0">
+                <button type="button" class="btn btn-light btn-sm" data-bs-dismiss="modal">বাতিল</button>
+                <button type="button" class="btn btn-primary btn-sm px-4" onclick="saveNoteAjax()">সংরক্ষণ করুন</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ══════════════════════════════════════════ -->
+<!--  Modal: Edit Question Modal                -->
+<!-- ══════════════════════════════════════════ -->
+<div class="modal fade" id="editQuestionModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content" style="border-radius:14px;">
+            <div class="modal-header border-0 pb-0">
+                <h5 class="modal-title fw-bold">প্রশ্ন এডিট করুন</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form asp-action="Edit" method="post">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="Id" id="editQId" />
+                <div class="modal-body">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label small fw-semibold">টপিক / ক্যাটাগরি *</label>
+                            <input type="text" name="Category" id="editQCat" required class="form-control form-control-sm" />
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label small fw-semibold">ক্যাটাগরি ক্রম (Order)</label>
+                            <input type="number" name="CategoryOrder" id="editQCatOrder" class="form-control form-control-sm" />
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label small fw-semibold">প্রশ্ন নম্বর</label>
+                            <input type="number" name="QuestionNo" id="editQNo" class="form-control form-control-sm" />
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label small fw-semibold">সাল (Year) *</label>
+                            <input type="number" name="Year" id="editQYear" class="form-control form-control-sm" required />
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label small fw-semibold">পরীক্ষা / সংস্থা *</label>
+                            <input type="text" name="ExamOrg" id="editQExamOrg" class="form-control form-control-sm" required />
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label small fw-semibold">পদবী / Post *</label>
+                            <input type="text" name="Post" id="editQPost" class="form-control form-control-sm" required />
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label small fw-semibold">প্রশ্ন (Question Text) *</label>
+                            <textarea name="QuestionText" id="editQText" class="form-control" rows="4" required></textarea>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer border-0 pt-0">
+                    <button type="button" class="btn btn-light btn-sm" data-bs-dismiss="modal">বাতিল</button>
+                    <button type="submit" class="btn btn-primary btn-sm px-4">আপডেট করুন</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        // ── Toggle Solved AJAX ──
+        async function toggleSolved(id) {
+            try {
+                const res = await fetch(`/PreviousYearQuestion/ToggleSolved?id=${id}`, {
+                    method: 'POST'
+                });
+                const data = await res.json();
+                if (data.success) {
+                    const card = document.getElementById(`qcard-${id}`);
+                    const btn = document.getElementById(`btn-solved-${id}`);
+                    const txt = document.getElementById(`txt-solved-${id}`);
+                    const icon = btn.querySelector('i');
+
+                    if (data.isSolved) {
+                        card.classList.add('solved-card');
+                        btn.classList.add('btn-solved-active');
+                        txt.innerText = 'সমাধান হয়েছে';
+                        icon.className = 'bi bi-check-circle-fill text-success';
+                    } else {
+                        card.classList.remove('solved-card');
+                        btn.classList.remove('btn-solved-active');
+                        txt.innerText = 'বাকি আছে';
+                        icon.className = 'bi bi-circle';
+                    }
+
+                    // Update top stats count
+                    if (data.totalSolved !== undefined) {
+                        document.getElementById('top-solved-count').innerText = data.totalSolved;
+                    }
+                }
+            } catch (err) {
+                console.error('Error toggling solved state', err);
+            }
+        }
+
+        // ── Toggle Bookmark AJAX ──
+        async function toggleBookmark(id) {
+            try {
+                const res = await fetch(`/PreviousYearQuestion/ToggleBookmark?id=${id}`, {
+                    method: 'POST'
+                });
+                const data = await res.json();
+                if (data.success) {
+                    const card = document.getElementById(`qcard-${id}`);
+                    const btn = document.getElementById(`btn-bookmark-${id}`);
+                    const icon = btn.querySelector('i');
+
+                    if (data.isBookmarked) {
+                        card.classList.add('bookmarked-card');
+                        btn.classList.add('btn-bookmark-active');
+                        icon.className = 'bi bi-star-fill text-warning';
+                    } else {
+                        card.classList.remove('bookmarked-card');
+                        btn.classList.remove('btn-bookmark-active');
+                        icon.className = 'bi bi-star';
+                    }
+
+                    // Update top stats count
+                    if (data.totalBookmarked !== undefined) {
+                        document.getElementById('top-bookmarked-count').innerText = data.totalBookmarked;
+                    }
+                }
+            } catch (err) {
+                console.error('Error toggling bookmark', err);
+            }
+        }
+
+        // ── Note Modal & Save ──
+        let noteModalObj = null;
+        function openNoteModal(id, noteText) {
+            document.getElementById('modalNoteQuestionId').value = id;
+            document.getElementById('modalNoteText').value = noteText || '';
+            if (!noteModalObj) {
+                noteModalObj = new bootstrap.Modal(document.getElementById('noteModal'));
+            }
+            noteModalObj.show();
+        }
+
+        async function saveNoteAjax() {
+            const id = document.getElementById('modalNoteQuestionId').value;
+            const note = document.getElementById('modalNoteText').value;
+
+            try {
+                const formData = new FormData();
+                formData.append('id', id);
+                formData.append('note', note);
+
+                const res = await fetch(`/PreviousYearQuestion/SaveNote`, {
+                    method: 'POST',
+                    body: formData
+                });
+                const data = await res.json();
+                if (data.success) {
+                    const box = document.getElementById(`qnotes-${id}`);
+                    const content = document.getElementById(`qnotes-content-${id}`);
+
+                    if (note && note.trim().length > 0) {
+                        content.innerText = note;
+                        box.style.display = 'block';
+                    } else {
+                        content.innerText = '';
+                        box.style.display = 'none';
+                    }
+
+                    if (noteModalObj) noteModalObj.hide();
+                }
+            } catch (err) {
+                console.error('Error saving note', err);
+            }
+        }
+
+        // ── Copy Question ──
+        function copyQuestion(id) {
+            const text = document.getElementById(`qtext-${id}`).innerText;
+            navigator.clipboard.writeText(text).then(() => {
+                const btn = document.getElementById(`copy-btn-${id}`);
+                const originalHtml = btn.innerHTML;
+                btn.innerHTML = '<i class="bi bi-check2 text-success"></i> <span class="text-success">কপি হয়েছে!</span>';
+                setTimeout(() => {
+                    btn.innerHTML = originalHtml;
+                }, 2000);
+            });
+        }
+
+        // ── Edit Modal Fill ──
+        let editModalObj = null;
+        function openEditModal(id, cat, order, qno, year, exam, post, text) {
+            document.getElementById('editQId').value = id;
+            document.getElementById('editQCat').value = cat;
+            document.getElementById('editQCatOrder').value = order;
+            document.getElementById('editQNo').value = qno;
+            document.getElementById('editQYear').value = year;
+            document.getElementById('editQExamOrg').value = exam;
+            document.getElementById('editQPost').value = post;
+            document.getElementById('editQText').value = text;
+
+            if (!editModalObj) {
+                editModalObj = new bootstrap.Modal(document.getElementById('editQuestionModal'));
+            }
+            editModalObj.show();
+        }
+    </script>
+}

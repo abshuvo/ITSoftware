@@ -1,11 +1,11 @@
-﻿using ITSoftware.Data;
+using ITSoftware.Data;
 using Microsoft.EntityFrameworkCore;
 
 namespace ITSoftware
 {
     public class Program
     {
-        public static void Main(string[] args)
+        public static async Task Main(string[] args)
         {
             var builder = WebApplication.CreateBuilder(args);
             builder.Services.AddDbContext<ExamPrepDbContext>(options =>
@@ -20,6 +20,9 @@ namespace ITSoftware
 
             var app = builder.Build();
             
+            // Auto-seed Previous Year Questions
+            await ITSoftware.Services.PreviousYearQuestionSeeder.InitializeAsync(app.Services);
+
             // Configure the HTTP request pipeline.
             if (!app.Environment.IsDevelopment())
             {

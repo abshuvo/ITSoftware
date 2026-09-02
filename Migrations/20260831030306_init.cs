@@ -156,7 +156,7 @@ namespace ITSoftware.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "StudyTask",
+                name: "StudyTasks",
                 columns: table => new
                 {
                     Id = table.Column<int>(type: "int", nullable: false)
@@ -170,9 +170,9 @@ namespace ITSoftware.Migrations
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_StudyTask", x => x.Id);
+                    table.PrimaryKey("PK_StudyTasks", x => x.Id);
                     table.ForeignKey(
-                        name: "FK_StudyTask_StudyPlans_StudyPlanId",
+                        name: "FK_StudyTasks_StudyPlans_StudyPlanId",
                         column: x => x.StudyPlanId,
                         principalTable: "StudyPlans",
                         principalColumn: "Id",
@@ -184,10 +184,10 @@ namespace ITSoftware.Migrations
                 columns: new[] { "Id", "Category", "Content", "CreatedAt", "Progress", "Title" },
                 values: new object[,]
                 {
-                    { 1, "GK", null, new DateTime(2026, 8, 31, 0, 19, 26, 828, DateTimeKind.Local).AddTicks(3723), 0, "বাংলাদেশের ইতিহাস" },
-                    { 2, "English", null, new DateTime(2026, 8, 31, 0, 19, 26, 828, DateTimeKind.Local).AddTicks(3726), 0, "Sentence Correction" },
-                    { 3, "Math", null, new DateTime(2026, 8, 31, 0, 19, 26, 828, DateTimeKind.Local).AddTicks(3727), 0, "Aptitude — Percentage" },
-                    { 4, "Viva", null, new DateTime(2026, 8, 31, 0, 19, 26, 828, DateTimeKind.Local).AddTicks(3728), 0, "Common HR Questions" }
+                    { 1, "GK", null, new DateTime(2026, 8, 31, 9, 3, 6, 22, DateTimeKind.Local).AddTicks(1768), 0, "বাংলাদেশের ইতিহাস" },
+                    { 2, "English", null, new DateTime(2026, 8, 31, 9, 3, 6, 22, DateTimeKind.Local).AddTicks(1774), 0, "Sentence Correction" },
+                    { 3, "Math", null, new DateTime(2026, 8, 31, 9, 3, 6, 22, DateTimeKind.Local).AddTicks(1775), 0, "Aptitude — Percentage" },
+                    { 4, "Viva", null, new DateTime(2026, 8, 31, 9, 3, 6, 22, DateTimeKind.Local).AddTicks(1776), 0, "Common HR Questions" }
                 });
 
             migrationBuilder.InsertData(
@@ -200,16 +200,16 @@ namespace ITSoftware.Migrations
                 columns: new[] { "Id", "Category", "CreatedAt", "IsCompleted", "Notes", "Progress", "Title" },
                 values: new object[,]
                 {
-                    { 1, "DSA", new DateTime(2026, 8, 31, 0, 19, 26, 828, DateTimeKind.Local).AddTicks(3625), false, null, 0, "Data Structures & Algorithms" },
-                    { 2, "Database", new DateTime(2026, 8, 31, 0, 19, 26, 828, DateTimeKind.Local).AddTicks(3635), false, null, 0, "Database Management" },
-                    { 3, "Network", new DateTime(2026, 8, 31, 0, 19, 26, 828, DateTimeKind.Local).AddTicks(3635), false, null, 0, "Networking" },
-                    { 4, "OOP", new DateTime(2026, 8, 31, 0, 19, 26, 828, DateTimeKind.Local).AddTicks(3636), false, null, 0, "OOP Concepts" },
-                    { 5, "OS", new DateTime(2026, 8, 31, 0, 19, 26, 828, DateTimeKind.Local).AddTicks(3637), false, null, 0, "Operating Systems" }
+                    { 1, "DSA", new DateTime(2026, 8, 31, 9, 3, 6, 22, DateTimeKind.Local).AddTicks(1667), false, null, 0, "Data Structures & Algorithms" },
+                    { 2, "Database", new DateTime(2026, 8, 31, 9, 3, 6, 22, DateTimeKind.Local).AddTicks(1679), false, null, 0, "Database Management" },
+                    { 3, "Network", new DateTime(2026, 8, 31, 9, 3, 6, 22, DateTimeKind.Local).AddTicks(1680), false, null, 0, "Networking" },
+                    { 4, "OOP", new DateTime(2026, 8, 31, 9, 3, 6, 22, DateTimeKind.Local).AddTicks(1681), false, null, 0, "OOP Concepts" },
+                    { 5, "OS", new DateTime(2026, 8, 31, 9, 3, 6, 22, DateTimeKind.Local).AddTicks(1681), false, null, 0, "Operating Systems" }
                 });
 
             migrationBuilder.CreateIndex(
-                name: "IX_StudyTask_StudyPlanId",
-                table: "StudyTask",
+                name: "IX_StudyTasks_StudyPlanId",
+                table: "StudyTasks",
                 column: "StudyPlanId");
         }
 
@@ -231,7 +231,7 @@ namespace ITSoftware.Migrations
                 name: "StudyLogs");
 
             migrationBuilder.DropTable(
-                name: "StudyTask");
+                name: "StudyTasks");
 
             migrationBuilder.DropTable(
                 name: "Syllabuses");

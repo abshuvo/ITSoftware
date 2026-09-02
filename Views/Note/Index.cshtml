@@ -176,7 +176,7 @@
         .file-grid {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-            gap: 12px;
+            gap: 16px;
         }
 
         .file-card {
@@ -422,7 +422,7 @@
         }
 
 
-        media (max-width: 900px) {
+        @@media (max-width: 900px) {
             .notes-layout
 
         {
@@ -435,7 +435,7 @@
 
         }
 
-        media (max-width: 768px) {
+        @@media (max-width: 768px) {
             /* File grid — single column */
             .file-grid
 
@@ -576,11 +576,11 @@
                 </span>
                 <i class="bi bi-chevron-down" id="upload-chevron"></i>
             </div>
-            <div class="upload-body" id="upload-body">
+            <div class="upload-body" id="upload-body" style="display: none;">
                 <form asp-action="Upload" asp-controller="Note"
                       method="post" enctype="multipart/form-data"
                       id="noteUploadForm">
-                    Html.AntiForgeryToken()
+                    @Html.AntiForgeryToken()
 
                     <div class="drop-zone" id="noteDropZone"
                          onclick="document.getElementById('noteFile').click()">
@@ -754,6 +754,7 @@
         </div>
 
         @* ── Notes list ── *@
+        @* ── Notes list (flat grid, no grouping) ── *@
         @if (!Model.AllNotes.Any())
         {
             <div class="empty">
@@ -772,111 +773,85 @@
         }
         else
         {
-            @* Category groups *@
-            foreach (var group in Model.GroupedByCategory)
-            {
-                var groupIcon = GetCategoryIcon(group.Key);
+            <div class="file-grid">
+                @foreach (var note in Model.AllNotes)
+                {
+                    var iconCls = GetIconClass(note.FileType);
+                    var badgeCls = GetBadgeClass(note.FileType);
+                    var sizeLabel = GetSizeStr(note.FileSize);
 
-                <div class="group-block">
-                    <div class="group-header">
-                        <i class="bi @groupIcon"
-                           style="color:var(--primary);font-size:18px;"></i>
-                        <span class="group-title">@group.Key</span>
-                        <span class="group-count">@group.Value.Count টি</span>
-                        <div class="group-line"></div>
-                    </div>
-
-                    <div class="file-grid">
-                        @foreach (var note in group.Value)
-                        {
-                            var iconCls = GetIconClass(note.FileType);
-                            var badgeCls = GetBadgeClass(note.FileType);
-                            var sizeLabel = GetSizeStr(note.FileSize);
-
-                            <div class="file-card">
-                                <div class="file-card-top">
-                                    <div class="file-type-badge @badgeCls">
-                                        <i class="bi @iconCls"></i>
-                                    </div>
-                                    <div style="flex:1;min-width:0;">
-                                        <div class="file-info-title"
-                                             title="@note.Title">
-                                            @note.Title
-                                        </div>
-                                        <div class="file-info-meta">
-                                            @note.UploadedAt.ToString("dd MMM yyyy")
-                                            &bull;
-                                            <span class="fs-badge">@sizeLabel</span>
-                                        </div>
-                                        @if (!string.IsNullOrEmpty(note.Description))
-                                        {
-                                            <div style="font-size:11px;color:#888;
-                                                                        margin-top:3px;line-height:1.4;">
-                                                @note.Description
-                                            </div>
-                                        }
-                                    </div>
-                                </div>
-
-                                <div style="display:flex;flex-wrap:wrap;gap:4px;">
-                                    <span class="cat-tag">@note.Category</span>
-                                    @if (!string.IsNullOrEmpty(note.SubCategory))
-                                    {
-                                        <span class="subcat-tag">
-                                            @note.SubCategory
-                                        </span>
-                                    }
-                                </div>
-
-                                <div class="file-actions">
-                                    @* PDF এবং Image — নতুন tab এ দেখাবে *@
-                                    @if (note.FileType == "pdf" || note.FileType == "image")
-                                    {
-                                        <a asp-action="Preview"
-                                           asp-controller="Note"
-                                           asp-route-id="@note.Id"
-                                           target="_blank"
-                                           class="act-btn act-view">
-                                            <i class="bi bi-eye"></i> দেখো
-                                        </a>
-                                    }
-                                    @* DOCX — Google Docs Viewer এ দেখাবে *@
-                                    else if (note.FileType == "doc")
-                                    {
-                                        <button type="button" onclick="previewDocx(@note.Id, '@note.FilePath')" class="act-btn act-view">
-                                        </button>
-                                    }
-
-                                    @* Download সবার জন্য *@
-                                    <a asp-action="Download"
-                                       asp-controller="Note"
-                                       asp-route-id="@note.Id"
-                                       class="act-btn act-download">
-                                        <i class="bi bi-download"></i> Download
-                                    </a>
-                                    <form asp-action="Delete"
-                                          asp-controller="Note"
-                                          method="post"
-                                          onsubmit="return confirm('এই note টি delete করবে?')"
-                                          style="margin:0;">
-                                        @Html.AntiForgeryToken()
-                                        <input type="hidden" name="id"
-                                               value="@note.Id" />
-                                        <input type="hidden" name="returnCategory"
-                                               value="@Model.ActiveCategory" />
-                                        <button type="submit"
-                                                class="act-btn act-delete">
-                                            <i class="bi bi-trash"></i>
-                                        </button>
-                                    </form>
-                                </div>
+                    <div class="file-card">
+                        <div class="file-card-top">
+                            <div class="file-type-badge @badgeCls">
+                                <i class="bi @iconCls"></i>
                             </div>
-                        }
-                    </div>
-                </div>
-            }
-        }
+                            <div style="flex:1;min-width:0;">
+                                <div class="file-info-title" title="@note.Title">
+                                    @note.Title
+                                </div>
+                                <div class="file-info-meta">
+                                    @note.UploadedAt.ToString("dd MMM yyyy")
+                                    &bull;
+                                    <span class="fs-badge">@sizeLabel</span>
+                                </div>
+                                @if (!string.IsNullOrEmpty(note.Description))
+                                {
+                                    <div style="font-size:11px;color:#888;
+                                                    margin-top:3px;line-height:1.4;">
+                                        @note.Description
+                                    </div>
+                                }
+                            </div>
+                        </div>
 
+                        <div style="display:flex;flex-wrap:wrap;gap:4px;">
+                            <span class="cat-tag">@note.Category</span>
+                            @if (!string.IsNullOrEmpty(note.SubCategory))
+                            {
+                                <span class="subcat-tag">@note.SubCategory</span>
+                            }
+                        </div>
+
+                        <div class="file-actions">
+                            @if (note.FileType == "pdf" || note.FileType == "image")
+                            {
+                                <a asp-action="Preview" asp-controller="Note"
+                                   asp-route-id="@note.Id" target="_blank"
+                                   class="act-btn act-view">
+                                    <i class="bi bi-eye"></i> দেখো
+                                </a>
+                            }
+                            else if (note.FileType == "doc")
+                            {
+                                <button type="button"
+                                        onclick="previewDocx(@note.Id, '@note.FilePath')"
+                                        class="act-btn act-view">
+                                    <i class="bi bi-eye"></i> দেখো
+                                </button>
+                            }
+
+                            <a asp-action="Download" asp-controller="Note"
+                               asp-route-id="@note.Id" class="act-btn act-download">
+                                <i class="bi bi-download"></i> Download
+                            </a>
+
+                            <form asp-action="Delete" asp-controller="Note"
+                                  method="post"
+                                  onsubmit="return confirm('এই note টি delete করবে?')"
+                                  style="margin:0;">
+                                @Html.AntiForgeryToken()
+                                <input type="hidden" name="id" value="@note.Id" />
+                                <input type="hidden" name="returnCategory"
+                                       value="@Model.ActiveCategory" />
+                                <button type="submit" class="act-btn act-delete">
+                                    <i class="bi bi-trash"></i>
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                }
+            </div>
+        }
     </div>
 </div>
 
@@ -1020,9 +995,9 @@
 
 @section Scripts {
     <script>
-        setSidebarProgress(0);
+        //setSidebarProgress(0);
 
-        let uploadOpen = true;
+                let uploadOpen = false; 
         function toggleUpload() {
             const body    = document.getElementById('upload-body');
             const chevron = document.getElementById('upload-chevron');

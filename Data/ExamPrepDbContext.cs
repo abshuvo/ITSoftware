@@ -1,4 +1,4 @@
-﻿using ITSoftware.Models;
+using ITSoftware.Models;
 using Microsoft.EntityFrameworkCore;
 
 namespace ITSoftware.Data
@@ -21,6 +21,10 @@ namespace ITSoftware.Data
 
         public DbSet<StudyPlan> StudyPlans { get; set; }
         public DbSet<StudyTask> StudyTasks { get; set; }
+        public DbSet<PreviousYearQuestion> PreviousYearQuestions { get; set; }
+        public DbSet<Flashcard> Flashcards { get; set; }
+        public DbSet<MockExamResult> MockExamResults { get; set; }
+        public DbSet<McqMistake> McqMistakes { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {

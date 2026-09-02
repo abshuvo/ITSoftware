@@ -1,4 +1,4 @@
-﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations;
 
 namespace ITSoftware.Models
 {
@@ -31,6 +31,28 @@ namespace ITSoftware.Models
         [MaxLength(100)]
         public string? Category { get; set; }
 
+        [MaxLength(150)]
+        public string? SubCategory { get; set; }
+
+        [MaxLength(150)]
+        public string? Tag { get; set; }
+
+        public bool IsBookmarked { get; set; } = false;
+
+        public bool IsSolved { get; set; } = false;
+
+        public int WrongCount { get; set; } = 0;
+
         public DateTime CreatedAt { get; set; } = DateTime.Now;
+
+        [System.ComponentModel.DataAnnotations.Schema.NotMapped]
+        public string CorrectOptionText => CorrectAnswer?.Trim().ToUpperInvariant() switch
+        {
+            "A" => OptionA,
+            "B" => OptionB,
+            "C" => OptionC,
+            "D" => OptionD,
+            _ => OptionA
+        };
     }
 }
